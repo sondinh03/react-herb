@@ -2,6 +2,7 @@ import React from 'react';  //Import thư viện React core
 import ReactDOM from 'react-dom/client';  // Import ReactDOM để render vào DOM thật
 import './index.css'; // Import file css chung
 import { App } from './App';  // Import component App chính
+import { BrowserRouter } from 'react-router-dom';
 
 //  Tạo root element, createRoot() là API của React 18 để tạo root cho ứng dụng
 const root = ReactDOM.createRoot(
@@ -9,5 +10,7 @@ const root = ReactDOM.createRoot(
 );
 
 root.render(
+  <BrowserRouter>
     <App />
+  </BrowserRouter>
 );

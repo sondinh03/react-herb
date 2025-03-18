@@ -29,6 +29,7 @@ export const NewsSection = () => {
     return (
         <div className="py-4 text-center">
           <h2 className="text-success fw-bold">Bản tin dược liệu</h2>
+          <hr className="w-25 mx-auto my-4" />
           <div className="d-flex justify-content-center flex-wrap gap-4">
             {articles.map((article, index) => (
               <div key={index} className="card" style={{ width: "18rem" }}>
