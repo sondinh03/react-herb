@@ -1,0 +1,14 @@
+// File: app/api/plants/[id]/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { callApiGet } from "@/lib/api-utils";
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  return callApiGet(
+    request,
+    `/api/plants/${params.id}`,
+    "Lấy thông tin cây dược liệu thành công"
+  );
+}
