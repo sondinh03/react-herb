@@ -1,32 +1,32 @@
+/*
 import { NextRequest, NextResponse } from "next/server";
 import { API_ERRORS, extractToken } from "@/lib/api-utils";
 
-export async function POST(request: NextRequest) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
+    const userId = params.id;
     const body = await request.json();
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
-    const isAdminCreation = body.isAdminCreation === true;
-    const endpoint = isAdminCreation
-      ? "/api/users/create"
-      : "/api/auth/register";
+    const endpoint = `/api/users/${userId}`;
     const fullUrl = `${apiUrl}${endpoint}`;
+
+    const token = extractToken(request);
+    console.log("token: " + token);
+    if (!token) {
+      return NextResponse.json(API_ERRORS.UNAUTHORIZED, { status: 401 });
+    }
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
     };
-
-    if (isAdminCreation) {
-      const token = extractToken(request);
-      console.log("token: " + token)
-      if (!token) {
-        return NextResponse.json(API_ERRORS.UNAUTHORIZED, { status: 401 });
-      }
-      headers["Authorization"] = `Bearer ${token}`;
-    }
 
     try {
       const response = await fetch(fullUrl, {
-        method: "POST",
+        method: "PUT",
         headers,
         body: JSON.stringify(body),
       });
@@ -69,14 +69,10 @@ export async function POST(request: NextRequest) {
 
       const data = await response.json();
 
-      const successMessage = isAdminCreation
-        ? "Tạo người dùng thành công"
-        : "Đăng ký thành công";
-
       return NextResponse.json({
         success: true,
         data: data.data || data,
-        message: successMessage,
+        message: "Cập nhật người dùng thành công",
       });
     } catch (fetchError: any) {
       if (fetchError.name === "AbortError") {
@@ -94,4 +90,17 @@ export async function POST(request: NextRequest) {
       status: API_ERRORS.DEFAULT_ERROR.code,
     });
   }
+}
+  */
+
+import { callApiPut } from "@/lib/api-utils";
+import { NextRequest } from "next/server";
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const userId = params.id;
+  const endpoint = `/api/users/${userId}`;
+  return callApiPut(request, endpoint, "Cập nhật người dùng thành công");
 }

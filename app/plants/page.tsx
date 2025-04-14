@@ -77,7 +77,7 @@ interface Media {
 }
 
 // Định nghĩa interface cho Page
-interface Page<T> {
+export interface Page<T> {
   content: T[];
   totalElements: number;
   totalPages: number;
@@ -89,7 +89,7 @@ interface Page<T> {
 }
 
 // Định nghĩa interface cho API Response
-interface ApiResponse<T> {
+export interface ApiResponse<T> {
   success: boolean;
   message: string;
   data: T;
@@ -97,7 +97,7 @@ interface ApiResponse<T> {
 }
 
 // Định nghĩa interface cho SearchParams
-interface SearchParams {
+export interface SearchParams {
   pageIndex: number;
   pageSize: number;
   keyword: string;

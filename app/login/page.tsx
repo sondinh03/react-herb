@@ -29,6 +29,7 @@ export default function LoginPage() {
     password: "",
     rememberMe: false,
   });
+  const [userRole, setUserRole] = useState(3);
 
   /* 
     e: React.ChangeEvent<HTMLInputElement>: đây là kiểu dữ liệu cho sự kiện thay đổi của một <input>
@@ -56,7 +57,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-  
+
     try {
       const response = await fetch("/api/login", {
         method: "POST",
@@ -68,26 +69,31 @@ export default function LoginPage() {
           password: formData.password,
         }),
       });
-  
+
       const result = await response.json();
-  
+
       if (!response.ok) {
         throw new Error(result.message || AUTH_ERRORS.DEFAULT_ERROR.message);
       }
-  
+
       const { accessToken, user } = result.data || {};
-  
+
       if (accessToken) {
         localStorage.setItem("accessToken", accessToken);
-        
+
         if (user) {
           localStorage.setItem("userData", JSON.stringify(user));
+          if (user.roleType === 1) {
+            router.push("/admin");
+          } else {
+            router.push("/");
+          }
         }
       }
-  
+
       // Reset form
       setFormData({ username: "", password: "", rememberMe: false });
-  
+
       // Thông báo đăng nhập thành công
       toast({
         title: "Đăng nhập thành công",
@@ -95,11 +101,9 @@ export default function LoginPage() {
         variant: "default",
         duration: 3000,
       });
-  
-      router.push("/");
     } catch (error: any) {
       console.error("Login error:", error);
-  
+
       toast({
         title: "Đăng nhập thất bại",
         description: error.message,

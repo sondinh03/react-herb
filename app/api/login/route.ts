@@ -16,8 +16,6 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify(body),
       });
 
-      console.log("response ok:" + response.ok);
-
       if (!response.ok) {
         console.log("HTTP Error Status:", response.status); // Log mã lỗi
 

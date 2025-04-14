@@ -1,186 +1,113 @@
-/*
-"use client"
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Save, X, Plus, Trash2, Upload } from "lucide-react";
+import { Plant, PlantStatus } from "@/app/types/plant";
+import { Textarea } from "../ui/textarea";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import loading from "@/app/loading";
 
-import React, { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Save, Upload, X, Plus, Trash2 } from "lucide-react"
-import { useRouter } from "next/navigation"
+interface PlantFormProps {
+  plant: Plant;
+  isLoading: boolean;
+  onSubmit: (plant: Plant, publish?: boolean) => void;
+  onCancel?: () => void;
+  mode: "create" | "edit";
+}
 
-export default function CreatePlantPage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [images, setImages] = useState([
-    "/placeholder.svg?height=200&width=200&text=Ảnh+1",
-    "/placeholder.svg?height=200&width=200&text=Ảnh+2",
-  ])
-  
-  const [formData, setFormData] = useState({
-    name: "",
-    scientificName: "",
-    family: "",
-    genus: "",
-    otherNames: "",
-    partsUsed: "",
-    description: "",
-    distribution: "",
-    altitude: "",
-    harvestSeason: "",
-    status: 0, // 0 - draft, 1 - published, 2 - pending
-    botanicalCharacteristics: "",
-    stem: "",
-    leaves: "",
-    flowers: "",
-    fruits: "",
-    roots: "",
-    chemicalComposition: "",
-    ecology: "",
-    medicinalUses: "",
-    indications: "",
-    contraindications: "",
-    dosage: "",
-    folkRemedies: "",
-    sideEffects: "",
-    featured: false,
-    views: 0
-  })
+export default function PlantForm({
+  plant,
+  isLoading,
+  onSubmit,
+  onCancel,
+  mode,
+}: PlantFormProps) {
+  const [formData, setFormData] = useState<Plant>(plant);
+  const [images, setImages] = useState<string[]>(plant.images || []);
 
-  const handleInputChange = (e) => {
-    const { id, value } = e.target
-    setFormData({ ...formData, [id]: value })
-  }
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { id, value } = e.target;
+    setFormData({ ...formData, [id]: value });
+  };
 
-  const handleSelectChange = (field, value) => {
-    setFormData({ ...formData, [field]: value })
-  }
+  const handleSelectChange = (
+    field: string,
+    value: string | number | boolean
+  ) => {
+    setFormData({ ...formData, [field]: value });
+  };
 
   const handleAddImage = () => {
-    setImages([...images, `/placeholder.svg?height=200&width=200&text=Ảnh+${images.length + 1}`])
-  }
+    const newImages = [
+      ...images,
+      `/placeholder.svg?height=200&width=200&text=Ảnh+${images.length + 1}`,
+    ];
+    setImages(newImages);
+    setFormData({ ...formData, images: newImages });
+  };
 
-  const handleRemoveImage = (index) => {
-    setImages(images.filter((_, i) => i !== index))
-  }
-
-  const preparePlantData = () => {
-    // Map status from string to number if needed
-    let status = formData.status
-    if (typeof status === "string") {
-      switch (status) {
-        case "published":
-          status = 1
-          break
-        case "pending":
-          status = 2
-          break
-        default:
-          status = 0 // draft
-      }
-    }
-
-    return {
-      name: formData.name,
-      scientificName: formData.scientificName,
-      family: formData.family,
-      genus: formData.genus,
-      otherNames: formData.otherNames,
-      partsUsed: formData.partsUsed,
-      description: formData.description,
-      distribution: formData.distribution,
-      altitude: formData.altitude,
-      harvestSeason: formData.harvestSeason,
-      status: status,
-      botanicalCharacteristics: formData.botanicalCharacteristics,
-      chemicalComposition: formData.chemicalComposition,
-      ecology: formData.ecology,
-      medicinalUses: formData.medicinalUses,
-      indications: formData.indications,
-      contraindications: formData.contraindications,
-      dosage: formData.dosage,
-      folkRemedies: formData.folkRemedies,
-      sideEffects: formData.sideEffects,
-      featured: false,
-      views: 0
-    }
-  }
-
-  const handleSubmit = async (isDraft = false) => {
-    try {
-      setLoading(true)
-      setError("")
-      
-      const plantData = preparePlantData()
-      if (isDraft) {
-        plantData.status = 0
-      }
-      
-      const response = await fetch('/api/plants/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(plantData),
-      })
-      
-      const result = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(result.message || 'Có lỗi xảy ra khi tạo cây dược liệu')
-      }
-      
-      // Redirect to plant list or detail page
-      router.push('/admin/plants')
-    } catch (err) {
-      setError(err.message || 'Có lỗi xảy ra, vui lòng thử lại')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const handleRemoveImage = (index: number) => {
+    const newImages = images.filter((_, i) => i !== index);
+    setImages(newImages);
+    setFormData({ ...formData, images: newImages });
+  };
 
   const handleSaveDraft = () => {
-    handleSubmit(true)
-  }
+    onSubmit({ ...formData, status: PlantStatus.DRAFT });
+  };
 
   const handleSaveAndPublish = () => {
-    handleSubmit(false)
-  }
+    onSubmit({ ...formData, status: PlantStatus.PUBLISHED }, true);
+  };
 
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
-      <div className="mb-6">
-        <Link href="/admin/plants">
-          <Button variant="ghost" className="flex items-center gap-2 pl-0 hover:pl-2 transition-all">
-            <ArrowLeft className="h-4 w-4" />
-            Quay lại danh sách
-          </Button>
-        </Link>
-      </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-          {error}
-        </div>
-      )}
-
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Thêm cây dược liệu mới</h1>
-          <p className="mt-1 text-sm text-gray-500">Nhập thông tin chi tiết về cây dược liệu</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {mode === "create"
+              ? "Thêm cây dược liệu mới"
+              : `Chỉnh sửa: ${formData.name}`}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {mode === "create"
+              ? "Nhập thông tin chi tiết về cây dược liệu"
+              : "Cập nhật thông tin cây dược liệu"}
+          </p>
         </div>
         <div className="mt-4 sm:mt-0 flex gap-2">
-          <Button variant="outline" onClick={handleSaveDraft} disabled={loading}>
-            {loading ? "Đang lưu..." : "Lưu nháp"}
-          </Button>
-          <Button className="flex items-center gap-1" onClick={handleSaveAndPublish} disabled={loading}>
+          {mode === "create" && (
+            <Button
+              variant="outline"
+              onClick={handleSaveDraft}
+              disabled={isLoading}
+            >
+              {isLoading ? "Đang lưu..." : "Lưu nháp"}
+            </Button>
+          )}
+          <Button
+            className="flex items-center gap-1"
+            onClick={handleSaveAndPublish}
+            disabled={isLoading}
+          >
             <Save className="h-4 w-4" />
-            {loading ? "Đang lưu..." : "Lưu và xuất bản"}
+            {isLoading
+              ? "Đang lưu..."
+              : mode === "create"
+              ? "Lưu và xuất bản"
+              : "Lưu thay đổi"}
           </Button>
         </div>
       </div>
@@ -193,21 +120,25 @@ export default function CreatePlantPage() {
           <TabsTrigger value="media">Hình ảnh & Tài liệu</TabsTrigger>
         </TabsList>
 
+        {/* Basic Information */}
         <TabsContent value="basic-info">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
                   <CardTitle>Thông tin cơ bản</CardTitle>
-                  <CardDescription>Nhập các thông tin cơ bản về cây dược liệu</CardDescription>
+                  <CardDescription>
+                    Nhập các thông tin cơ bản về cây dược liệu
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Form fields for basic info */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Tên cây dược liệu</Label>
-                      <Input 
-                        id="name" 
-                        placeholder="Nhập tên cây dược liệu" 
+                      <Input
+                        id="name"
+                        placeholder="Nhập tên cây dược liệu"
                         value={formData.name}
                         onChange={handleInputChange}
                         required
@@ -215,9 +146,9 @@ export default function CreatePlantPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="scientificName">Tên khoa học</Label>
-                      <Input 
-                        id="scientificName" 
-                        placeholder="Nhập tên khoa học" 
+                      <Input
+                        id="scientificName"
+                        placeholder="Nhập tên khoa học"
                         value={formData.scientificName}
                         onChange={handleInputChange}
                         required
@@ -228,18 +159,18 @@ export default function CreatePlantPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="family">Họ</Label>
-                      <Input 
-                        id="family" 
-                        placeholder="Nhập họ thực vật" 
+                      <Input
+                        id="family"
+                        placeholder="Nhập họ thực vật"
                         value={formData.family}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="genus">Chi</Label>
-                      <Input 
-                        id="genus" 
-                        placeholder="Nhập chi thực vật" 
+                      <Input
+                        id="genus"
+                        placeholder="Nhập chi thực vật"
                         value={formData.genus}
                         onChange={handleInputChange}
                       />
@@ -249,18 +180,18 @@ export default function CreatePlantPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="otherNames">Tên khác</Label>
-                      <Input 
-                        id="otherNames" 
-                        placeholder="Các tên gọi khác (cách nhau bởi dấu phẩy)" 
+                      <Input
+                        id="otherNames"
+                        placeholder="Các tên gọi khác (cách nhau bởi dấu phẩy)"
                         value={formData.otherNames}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="partsUsed">Bộ phận dùng</Label>
-                      <Input 
-                        id="partsUsed" 
-                        placeholder="Các bộ phận dùng (cách nhau bởi dấu phẩy)" 
+                      <Input
+                        id="partsUsed"
+                        placeholder="Các bộ phận dùng (cách nhau bởi dấu phẩy)"
                         value={formData.partsUsed}
                         onChange={handleInputChange}
                       />
@@ -269,14 +200,15 @@ export default function CreatePlantPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="description">Mô tả chung</Label>
-                    <Textarea 
-                      id="description" 
-                      placeholder="Mô tả chung về cây dược liệu" 
-                      rows={4} 
+                    <Textarea
+                      id="description"
+                      placeholder="Mô tả chung về cây dược liệu"
+                      rows={4}
                       value={formData.description}
                       onChange={handleInputChange}
                     />
                   </div>
+                  {/* ... */}
                 </CardContent>
               </Card>
             </div>
@@ -285,9 +217,12 @@ export default function CreatePlantPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Phân loại & Trạng thái</CardTitle>
-                  <CardDescription>Thiết lập phân loại và trạng thái xuất bản</CardDescription>
+                  <CardDescription>
+                    Thiết lập phân loại và trạng thái xuất bản
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Classification and status fields */}
                   <div className="space-y-2">
                     <Label htmlFor="category">Danh mục</Label>
                     <Select onValueChange={(value) => handleSelectChange("category", value)}>
@@ -348,12 +283,14 @@ export default function CreatePlantPage() {
                       onChange={handleInputChange}
                     />
                   </div>
+                  {/* ... */}
                 </CardContent>
               </Card>
             </div>
           </div>
         </TabsContent>
 
+        {/* Other tabs */}
         <TabsContent value="botanical-info">
           <Card>
             <CardHeader>
@@ -633,144 +570,14 @@ export default function CreatePlantPage() {
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button variant="outline">Hủy</Button>
-              <Button onClick={handleSaveAndPublish} disabled={loading}>
-                {loading ? "Đang lưu..." : "Lưu thay đổi"}
+              <Button onClick={handleSaveAndPublish} disabled={isLoading}>
+                {isLoading ? "Đang lưu..." : "Lưu thay đổi"}
               </Button>
             </CardFooter>
           </Card>
         </TabsContent>
+        {/* ... */}
       </Tabs>
     </div>
-  )
-}
-*/
-
-// app/(admin)/admin/plants/create/page.tsx
-"use client"
-
-import React, { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
-import PlantForm from "@/components/plant/PlantForm"
-import { Plant, PlantStatus } from "@/app/types/plant"
-import { toast } from "@/hooks/use-toast"
-
-export default function CreatePlantPage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  
-  const initialPlant: Plant = {
-    name: "",
-    scientificName: "",
-    family: "",
-    genus: "",
-    otherNames: "",
-    partsUsed: "",
-    description: "",
-    distribution: "",
-    altitude: "",
-    harvestSeason: "",
-    status: PlantStatus.DRAFT,
-    botanicalCharacteristics: "",
-    stem: "",
-    leaves: "",
-    flowers: "",
-    fruits: "",
-    roots: "",
-    chemicalComposition: "",
-    ecology: "",
-    medicinalUses: "",
-    indications: "",
-    contraindications: "",
-    dosage: "",
-    folkRemedies: "",
-    sideEffects: "",
-    featured: false,
-    views: 0,
-    images: [
-      "/placeholder.svg?height=200&width=200&text=Ảnh+1",
-      "/placeholder.svg?height=200&width=200&text=Ảnh+2",
-    ]
-  }
-
-  const handleSubmit = async (plant: Plant, publish = false) => {
-    try {
-      // Set plant status based on publish parameter
-      if (publish) {
-        plant.status = PlantStatus.PUBLISHED
-      }
-
-      // Get authentication token from local storage
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
-      }
-      
-      // Send API request to create plant
-      const response = await fetch('/api/admin/plants/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(plant),
-      });
-      
-      // Parse the response
-      const result = await response.json();
-      
-      // Handle the response based on success/failure
-      if (result.success) {
-        toast({
-          title: "Thành công",
-          description: result.message,
-        });
-        router.push('/admin/plants');
-      } else {
-        toast({
-          title: "Thất bại",
-          description: result.message || "Không thể thêm cây dược liệu",
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
-      // Handle any exceptions
-      toast({
-        title: "Lỗi",
-        description: error.message || "Đã xảy ra lỗi khi thêm cây dược liệu mới",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div>
-      <div className="mb-6">
-        <Link href="/admin/plants">
-          <Button variant="ghost" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Quay lại danh sách
-          </Button>
-        </Link>
-      </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-          {error}
-        </div>
-      )}
-
-      <PlantForm 
-        plant={initialPlant}
-        isLoading={loading}
-        onSubmit={handleSubmit}
-        mode="create"
-      />
-    </div>
-  )
+  );
 }
