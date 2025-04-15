@@ -2,9 +2,9 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
+import { LayoutWrapper } from "@/components/layoutwrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,14 +25,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <Toaster />
-          <Header />
-          <main>{children}</main>
-          <Footer />
+          <LayoutWrapper>{children}</LayoutWrapper>
         </ThemeProvider>
       </body>
     </html>
   );
 }
-
-import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";

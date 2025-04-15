@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Leaf,
@@ -18,9 +18,9 @@ import {
   X,
   Bell,
   Search,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,13 +28,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ThemeProvider } from "@/components/theme-provider"
+} from "@/components/ui/dropdown-menu";
+import { ThemeProvider } from "@/components/theme-provider";
 
 interface NavItem {
-  title: string
-  href: string
-  icon: React.ReactNode
+  title: string;
+  href: string;
+  icon: React.ReactNode;
 }
 
 const navItems: NavItem[] = [
@@ -73,31 +73,50 @@ const navItems: NavItem[] = [
     href: "/admin/settings",
     icon: <Settings className="h-5 w-5" />,
   },
-]
+];
 
 export default function AdminLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const pathname = usePathname()
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    localStorage.removeItem("accessToken");
+    router.push("/login");
+  };
 
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <div className="flex h-screen bg-gray-100">
         {/* Sidebar for mobile */}
-        <div className={`fixed inset-0 z-40 lg:hidden ${sidebarOpen ? "block" : "hidden"}`}>
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)}></div>
+        <div
+          className={`fixed inset-0 z-40 lg:hidden ${
+            sidebarOpen ? "block" : "hidden"
+          }`}
+        >
+          <div
+            className="fixed inset-0 bg-gray-600 bg-opacity-75"
+            onClick={() => setSidebarOpen(false)}
+          ></div>
           <div className="fixed inset-y-0 left-0 flex w-full max-w-xs flex-col bg-white">
             <div className="flex items-center justify-between h-16 px-6 border-b">
               <div className="flex items-center">
                 <div className="h-8 w-8 rounded-full bg-green-600 flex items-center justify-center">
                   <span className="text-white font-bold">DL</span>
                 </div>
-                <span className="ml-2 text-xl font-bold text-green-800">Admin</span>
+                <span className="ml-2 text-xl font-bold text-green-800">
+                  Admin
+                </span>
               </div>
-              <button type="button" className="text-gray-500 hover:text-gray-600" onClick={() => setSidebarOpen(false)}>
+              <button
+                type="button"
+                className="text-gray-500 hover:text-gray-600"
+                onClick={() => setSidebarOpen(false)}
+              >
                 <X className="h-6 w-6" />
               </button>
             </div>
@@ -108,7 +127,9 @@ export default function AdminLayout({
                     key={item.href}
                     href={item.href}
                     className={`flex items-center px-4 py-3 text-sm font-medium rounded-md ${
-                      pathname === item.href ? "bg-green-50 text-green-700" : "text-gray-700 hover:bg-gray-50"
+                      pathname === item.href
+                        ? "bg-green-50 text-green-700"
+                        : "text-gray-700 hover:bg-gray-50"
                     }`}
                     onClick={() => setSidebarOpen(false)}
                   >
@@ -131,7 +152,9 @@ export default function AdminLayout({
                     <div className="h-8 w-8 rounded-full bg-green-600 flex items-center justify-center">
                       <span className="text-white font-bold">DL</span>
                     </div>
-                    <span className="ml-2 text-xl font-bold text-green-800">DuocLieuVN</span>
+                    <span className="ml-2 text-xl font-bold text-green-800">
+                      DuocLieuVN
+                    </span>
                   </div>
                 </div>
                 <nav className="flex-1 space-y-1 py-4 px-2">
@@ -140,7 +163,9 @@ export default function AdminLayout({
                       key={item.href}
                       href={item.href}
                       className={`group flex items-center px-3 py-3 text-sm font-medium rounded-md ${
-                        pathname === item.href ? "bg-green-50 text-green-700" : "text-gray-700 hover:bg-gray-50"
+                        pathname === item.href
+                          ? "bg-green-50 text-green-700"
+                          : "text-gray-700 hover:bg-gray-50"
                       }`}
                     >
                       <span className="mr-3">{item.icon}</span>
@@ -153,15 +178,23 @@ export default function AdminLayout({
                 <div className="flex items-center">
                   <div>
                     <Avatar>
-                      <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Admin" />
+                      <AvatarImage
+                        src="/placeholder.svg?height=32&width=32"
+                        alt="Admin"
+                      />
                       <AvatarFallback>AD</AvatarFallback>
                     </Avatar>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-700">Admin User</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      Admin User
+                    </p>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="link" className="p-0 h-auto text-xs text-gray-500 hover:text-gray-700">
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto text-xs text-gray-500 hover:text-gray-700"
+                        >
                           Xem tùy chọn
                         </Button>
                       </DropdownMenuTrigger>
@@ -195,7 +228,11 @@ export default function AdminLayout({
           <header className="bg-white shadow-sm">
             <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
               <div className="flex items-center">
-                <button type="button" className="text-gray-500 lg:hidden" onClick={() => setSidebarOpen(true)}>
+                <button
+                  type="button"
+                  className="text-gray-500 lg:hidden"
+                  onClick={() => setSidebarOpen(true)}
+                >
                   <Menu className="h-6 w-6" />
                 </button>
                 <div className="ml-4 lg:ml-0 relative w-64 lg:max-w-xs">
@@ -220,25 +257,34 @@ export default function AdminLayout({
                 <div className="ml-4 relative">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Button
+                        variant="ghost"
+                        className="relative h-8 w-8 rounded-full"
+                      >
                         <Avatar>
-                          <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Admin" />
+                          <AvatarImage
+                            src="/placeholder.svg?height=32&width=32"
+                            alt="Admin"
+                          />
                           <AvatarFallback>AD</AvatarFallback>
                         </Avatar>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
-                      <DropdownMenuItem>
-                        <UserCircle className="mr-2 h-4 w-4" />
-                        <span>Hồ sơ</span>
-                      </DropdownMenuItem>
+                      <Link href="users/profile">
+                        <DropdownMenuItem>
+                          <UserCircle className="mr-2 h-4 w-4" />
+                          <span>Hồ sơ</span>
+                        </DropdownMenuItem>
+                      </Link>
+
                       <DropdownMenuItem>
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Cài đặt</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Đăng xuất</span>
                       </DropdownMenuItem>
@@ -254,6 +300,5 @@ export default function AdminLayout({
         </div>
       </div>
     </ThemeProvider>
-  )
+  );
 }
-

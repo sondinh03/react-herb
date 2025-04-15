@@ -444,10 +444,13 @@ export default function EditPlantPage() {
   const handleSubmit = async (plant: Plant) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/plants/${plantId}`, {
+      const token = localStorage.getItem("accessToken");
+
+      const response = await fetch(`/api/admin/plants/edit/${plantId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify(plant),
       });

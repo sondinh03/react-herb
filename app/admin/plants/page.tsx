@@ -48,7 +48,7 @@ interface Plant {
   name: string;
   scientificName: string;
   family: string;
-  parts: string;
+  partsUsed: string;
   status: number;
   createdAt: string;
   updatedAt: string;
@@ -114,7 +114,7 @@ export default function AdminPlantsPage() {
     {
       key: "parts",
       header: "Bộ phận dùng",
-      cell: (plant: Plant) => plant.parts,
+      cell: (plant: Plant) => plant.partsUsed,
     },
     {
       key: "status",

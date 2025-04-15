@@ -6,6 +6,6 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
     const plantId = params.id;
-    const endpoint = `api/plants/${plantId}`;
+    const endpoint = `/api/plants/${plantId}`;
     return callApiPut(request, endpoint, "Cập nhật cây dược liệu thành công");
 }
