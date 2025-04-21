@@ -98,9 +98,12 @@ export default function AdminUsersPage() {
       key: "fullname",
       header: "Họ và tên",
       cell: (user: User) => (
-        <span className="font-medium">{user.fullName}</span>
+        <div className="flex items-center gap-3">
+          <div>
+            <p className="font-medium">{user.fullName}</p>
+          </div>
+        </div>
       ),
-      className: "w-[50px]",
     },
     {
       key: "name",

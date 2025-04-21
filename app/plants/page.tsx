@@ -483,6 +483,7 @@ export default function PlantsPage() {
                   <Card key={plant.id} className="overflow-hidden">
                     <div className="h-48 bg-green-50">
                       <img
+                      /*
                         src={
                           plant.imageUrl ||
                           (plant.media &&
@@ -492,6 +493,8 @@ export default function PlantsPage() {
                             plant.name
                           )}`
                         }
+                      */
+                         src="http://localhost:8081/api/files/2025_4/d6cd5de8-c71b-41fb-a84c-378933dd5407.jpg"
                         alt={plant.name}
                         className="w-full h-full object-cover"
                       />

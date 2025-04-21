@@ -16,7 +16,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
-
+import { Plant } from "@/app/types/plant";
+/*
 interface Plant {
   id: number;
   name: string;
@@ -49,6 +50,7 @@ interface Plant {
   createdAt: string;
   updatedAt: string;
 }
+  */
 
 export default function PlantDetailPage() {
   const router = useRouter();

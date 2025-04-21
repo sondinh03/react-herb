@@ -18,23 +18,10 @@ import {
   Edit,
   Save,
   Lock,
-  Mail,
-  User,
   Clock,
-  Shield,
-  CheckCircle,
   X,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 interface UserProfile {
   id: number;
@@ -42,11 +29,7 @@ interface UserProfile {
   email: string;
   fullName: string;
   roleType: number;
-  status: number;
-  lastLogin: string;
   createdAt: string;
-  phoneNumber?: string;
-  address?: string;
 }
 
 interface LoginHistory {
@@ -65,8 +48,7 @@ export default function UserProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     fullName: "",
-    phoneNumber: "",
-    address: "",
+    email: "",
   });
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -83,21 +65,20 @@ export default function UserProfilePage() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        });
+        });   
 
         if (!response.ok) {
           throw new Error("Không thể lấy thông tin tài khoản");
         }
 
         const data = await response.json();
-        setUser(data.user);
-        setLoginHistory(data.loginHistory || []);
+        setUser(data.data);
+        // setLoginHistory(data.loginHistory || []);
         
         // Thiết lập form chỉnh sửa
         setEditForm({
-          fullName: data.user.fullName || "",
-          phoneNumber: data.user.phoneNumber || "",
-          address: data.user.address || "",
+          fullName: data.data.fullName || "",
+          email: data.data.email || "",
         });
       } catch (err: any) {
         setError(err.message);
@@ -119,8 +100,7 @@ export default function UserProfilePage() {
       // Reset form khi hủy chỉnh sửa
       setEditForm({
         fullName: user?.fullName || "",
-        phoneNumber: user?.phoneNumber || "",
-        address: user?.address || "",
+        email: user?.email || "",
       });
     }
     setIsEditing(!isEditing);

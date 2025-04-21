@@ -653,7 +653,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
-import PlantForm from "@/components/plant/PlantForm"
+import PlantForm from "@/components/plant/plant-form"
 import { Plant, PlantStatus } from "@/app/types/plant"
 import { toast } from "@/hooks/use-toast"
 
