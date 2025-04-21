@@ -9,7 +9,7 @@ export const PLANT_CATEGORIES = [
 ];
 
 export const PLANT_STATUS_OPTIONS = [
-  { value: 0, label: "Bản nháp" },
-  { value: 1, label: "Đã xuất bản" },
-  { value: 2, label: "Chờ duyệt" },
+  { value: 1, label: "Bản nháp" },
+  { value: 2, label: "Đã xuất bản" },
+  { value: 3, label: "Chờ duyệt" },
 ];

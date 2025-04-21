@@ -395,7 +395,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import PlantForm from "@/components/plant/PlantForm";
+import PlantForm from "@/components/plant/plant-form";
 import { Plant } from "@/app/types/plant";
 
 export default function EditPlantPage() {

@@ -73,7 +73,7 @@ export default function AdminPlantsPage() {
     apiEndpoint: "/api/plants/search",
     initialParams: {
       pageIndex: 1,
-      pageSize: 5,
+      pageSize: 10,
     },
     requireAuth: true,
   });
