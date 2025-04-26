@@ -5,7 +5,6 @@ import { getMediaById } from "@/services/media-service";
 import { FileType, type MediaResponse } from "@/app/types/media";
 import { Loader2, FileText, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 
 // Cache cho media đã tải
 const mediaCache = new Map<number, MediaResponse>();

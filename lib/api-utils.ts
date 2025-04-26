@@ -162,25 +162,28 @@ export async function callApi(
   request: NextRequest,
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
-  successMessage: string
+  successMessage: string,
+  options: { requireAuth?: boolean } = { requireAuth: true }
 ): Promise<NextResponse> {
   try {
-    // Extract token from the request
-    const token = extractToken(request);
-    if (!token) {
-      return NextResponse.json(API_ERRORS.UNAUTHORIZED, { status: 401 });
-    }
-
     // Build API URL
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
     const fullUrl = `${apiUrl}${endpoint}`;
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     };
 
-    const options: RequestInit = {
+    // Add authorization header if required
+    if (options.requireAuth !== false) {
+      const token = extractToken(request);
+      if (!token) {
+        return NextResponse.json(API_ERRORS.UNAUTHORIZED, { status: 401 });
+      }
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const requestOptions: RequestInit = {
       method,
       headers,
     };
@@ -188,11 +191,11 @@ export async function callApi(
     // Extract request body for methods that need it
     if (method !== "GET" && method !== "HEAD") {
       const body = await request.json();
-      options.body = JSON.stringify(body);
+      requestOptions.body = JSON.stringify(body);
     }
 
     // Call the API
-    const response = await fetch(fullUrl, options);
+    const response = await fetch(fullUrl, requestOptions);
 
     if (!response.ok) {
       const errorMapping: Record<number, any> = {
@@ -359,8 +362,9 @@ export async function handleApiSearchRequest(
 export const callApiGet = (
   req: NextRequest,
   endpoint: string,
-  successMessage: string
-) => callApi(req, endpoint, "GET", successMessage);
+  successMessage: string,
+  options?: { requireAuth?: boolean }
+) => callApi(req, endpoint, "GET", successMessage, options);
 
 /*
 export async function callApiPost(
@@ -452,11 +456,13 @@ export async function callApiPost(
 export const callApiPost = (
   req: NextRequest,
   endpoint: string,
-  successMessage: string
-) => callApi(req, endpoint, "POST", successMessage);
+  successMessage: string,
+  options?: { requireAuth?: boolean }
+) => callApi(req, endpoint, "POST", successMessage, options);
 
 export const callApiPut = (
   req: NextRequest,
   endpoint: string,
-  successMessage: string
-) => callApi(req, endpoint, "PUT", successMessage);
+  successMessage: string,
+  options?: { requireAuth?: boolean }
+) => callApi(req, endpoint, "PUT", successMessage, options);

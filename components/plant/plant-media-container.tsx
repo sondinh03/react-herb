@@ -29,18 +29,18 @@ export function PlantMediaContainer({ plantId }: PlantMediaContainerProps) {
       try {
         setIsLoading(true);
 
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          throw new Error("Không tìm thấy token xác thực");
-        }
+        // const token = localStorage.getItem("accessToken");
+        // if (!token) {
+        //   throw new Error("Không tìm thấy token xác thực");
+        // }
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
         const response = await fetch(`/api/plants/${plantId}/media-ids`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          // headers: {
+          //   Authorization: `Bearer ${token}`,
+          // },
           signal: controller.signal,
         });
 
