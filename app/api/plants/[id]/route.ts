@@ -9,6 +9,7 @@ export async function GET(
   return callApiGet(
     request,
     `/api/plants/${params.id}`,
-    "Lấy thông tin cây dược liệu thành công"
+    "Lấy thông tin cây dược liệu thành công",
+    {requireAuth: false}
   );
 }

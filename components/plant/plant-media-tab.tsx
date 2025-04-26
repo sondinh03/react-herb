@@ -1,59 +1,88 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Upload, X, Plus, Loader2, FileText, Trash2, AlertCircle } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
-import { MediaViewer } from "@/components/media/media-viewer"
-import { cn } from "@/lib/utils"
-import { uploadMedia, deleteMedia } from "@/services/media-service"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useState, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Upload,
+  X,
+  Plus,
+  Loader2,
+  FileText,
+  Trash2,
+  AlertCircle,
+} from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { MediaViewer } from "@/components/media/media-viewer";
+import { cn } from "@/lib/utils";
+import { uploadMedia, deleteMedia } from "@/services/media-service";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface PlantMediaTabProps {
-  mediaIds: number[]
-  onMediaChange: (mediaIds: number[]) => void
-  plantId?: number
-  isLoading?: boolean
+  mediaIds: number[];
+  onMediaChange: (mediaIds: number[]) => void;
+  plantId?: number;
+  isLoading?: boolean;
 }
 
-export function PlantMediaTab({ mediaIds = [], onMediaChange, plantId, isLoading = false }: PlantMediaTabProps) {
-  const [uploadingImage, setUploadingImage] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const [selectedMediaId, setSelectedMediaId] = useState<number | null>(null)
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [mediaToDelete, setMediaToDelete] = useState<{ id: number; index: number } | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const documentInputRef = useRef<HTMLInputElement>(null)
-  const [documents, setDocuments] = useState<{ name: string; size: string; id?: number }[]>([])
+export function PlantMediaTab({
+  mediaIds = [],
+  onMediaChange,
+  plantId,
+  isLoading = false,
+}: PlantMediaTabProps) {
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedMediaId, setSelectedMediaId] = useState<number | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [mediaToDelete, setMediaToDelete] = useState<{
+    id: number;
+    index: number;
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
+  const [documents, setDocuments] = useState<
+    { name: string; size: string; id?: number }[]
+  >([]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     try {
-      setUploadingImage(true)
+      setUploadingImage(true);
 
       // Giả lập tiến trình upload
       const interval = setInterval(() => {
         setUploadProgress((prev) => {
           if (prev >= 90) {
-            clearInterval(interval)
-            return 90
+            clearInterval(interval);
+            return 90;
           }
-          return prev + 10
-        })
-      }, 300)
+          return prev + 10;
+        });
+      }, 300);
 
       // Upload từng file một
-      const newMediaIds = [...mediaIds]
-      const successCount = { count: 0 }
-      const errorCount = { count: 0 }
+      const newMediaIds = [...mediaIds];
+      const successCount = { count: 0 };
+      const errorCount = { count: 0 };
 
       // Sử dụng Promise.all để upload song song
       await Promise.all(
@@ -63,71 +92,77 @@ export function PlantMediaTab({ mediaIds = [], onMediaChange, plantId, isLoading
             const response = await uploadMedia(
               file,
               `Hình ảnh cây dược liệu ${plantId || "mới"}`,
-              plantId, // Truyền plantId vào đây
-            )
+              plantId // Truyền plantId vào đây
+            );
 
             if (response.success && response.data) {
-              newMediaIds.push(response.data.id)
-              successCount.count++
+              newMediaIds.push(response.data.id);
+              successCount.count++;
             } else {
-              errorCount.count++
-              console.error(`Failed to upload ${file.name}: ${response.message}`)
+              errorCount.count++;
+              console.error(
+                `Failed to upload ${file.name}: ${response.message}`
+              );
             }
           } catch (error) {
-            errorCount.count++
-            console.error(`Error uploading ${file.name}:`, error)
+            errorCount.count++;
+            console.error(`Error uploading ${file.name}:`, error);
           }
-        }),
-      )
+        })
+      );
 
-      clearInterval(interval)
-      setUploadProgress(100)
+      clearInterval(interval);
+      setUploadProgress(100);
 
       // Cập nhật danh sách media IDs
-      onMediaChange(newMediaIds)
+      onMediaChange(newMediaIds);
 
       // Reset input sau khi upload thành công
       if (fileInputRef.current) {
-        fileInputRef.current.value = ""
+        fileInputRef.current.value = "";
       }
 
       // Hiển thị thông báo kết quả
       if (successCount.count > 0) {
         toast({
           title: "Upload thành công",
-          description: `Đã tải lên ${successCount.count} hình ảnh thành công${errorCount.count > 0 ? `, ${errorCount.count} lỗi` : ""}`,
+          description: `Đã tải lên ${successCount.count} hình ảnh thành công${
+            errorCount.count > 0 ? `, ${errorCount.count} lỗi` : ""
+          }`,
           variant: errorCount.count > 0 ? "default" : "success",
-        })
+        });
       } else if (errorCount.count > 0) {
         toast({
           title: "Upload thất bại",
           description: `Không thể tải lên ${errorCount.count} hình ảnh`,
           variant: "destructive",
-        })
+        });
       }
     } catch (error: any) {
       toast({
         title: "Lỗi upload",
         description: error.message || "Không thể tải lên hình ảnh",
         variant: "destructive",
-      })
+      });
     } finally {
-      setUploadingImage(false)
-      setUploadProgress(0)
+      setUploadingImage(false);
+      setUploadProgress(0);
     }
-  }
+  };
 
-  const handleDocumentChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
+  const handleDocumentChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     try {
-      setUploadingImage(true)
+      setUploadingImage(true);
 
       // Upload từng file một
-      const newDocuments = [...documents]
-      const successCount = { count: 0 }
-      const errorCount = { count: 0 }
+      const newDocuments = [...documents];
+      const successCount = { count: 0 };
+      const errorCount = { count: 0 };
 
       // Sử dụng Promise.all để upload song song
       await Promise.all(
@@ -137,135 +172,143 @@ export function PlantMediaTab({ mediaIds = [], onMediaChange, plantId, isLoading
             const response = await uploadMedia(
               file,
               `Tài liệu cây dược liệu ${plantId || "mới"}`,
-              plantId, // Truyền plantId vào đây
-            )
+              plantId // Truyền plantId vào đây
+            );
 
             if (response.success && response.data) {
               newDocuments.push({
                 name: file.name,
                 size: formatFileSize(file.size),
                 id: response.data.id,
-              })
-              successCount.count++
+              });
+              successCount.count++;
             } else {
-              errorCount.count++
-              console.error(`Failed to upload ${file.name}: ${response.message}`)
+              errorCount.count++;
+              console.error(
+                `Failed to upload ${file.name}: ${response.message}`
+              );
             }
           } catch (error) {
-            errorCount.count++
-            console.error(`Error uploading ${file.name}:`, error)
+            errorCount.count++;
+            console.error(`Error uploading ${file.name}:`, error);
           }
-        }),
-      )
+        })
+      );
 
       // Cập nhật danh sách tài liệu
-      setDocuments(newDocuments)
+      setDocuments(newDocuments);
 
       // Reset input sau khi upload thành công
       if (documentInputRef.current) {
-        documentInputRef.current.value = ""
+        documentInputRef.current.value = "";
       }
 
       // Hiển thị thông báo kết quả
       if (successCount.count > 0) {
         toast({
           title: "Upload thành công",
-          description: `Đã tải lên ${successCount.count} tài liệu thành công${errorCount.count > 0 ? `, ${errorCount.count} lỗi` : ""}`,
+          description: `Đã tải lên ${successCount.count} tài liệu thành công${
+            errorCount.count > 0 ? `, ${errorCount.count} lỗi` : ""
+          }`,
           variant: errorCount.count > 0 ? "default" : "success",
-        })
+        });
       } else if (errorCount.count > 0) {
         toast({
           title: "Upload thất bại",
           description: `Không thể tải lên ${errorCount.count} tài liệu`,
           variant: "destructive",
-        })
+        });
       }
     } catch (error: any) {
       toast({
         title: "Lỗi upload",
         description: error.message || "Không thể tải lên tài liệu",
         variant: "destructive",
-      })
+      });
     } finally {
-      setUploadingImage(false)
+      setUploadingImage(false);
     }
-  }
+  };
 
   // Các hàm khác giữ nguyên
   const handleOpenFileDialog = useCallback(() => {
     if (fileInputRef.current) {
-      fileInputRef.current.click()
+      fileInputRef.current.click();
     }
-  }, [])
+  }, []);
 
   const handleOpenDocumentDialog = useCallback(() => {
     if (documentInputRef.current) {
-      documentInputRef.current.click()
+      documentInputRef.current.click();
     }
-  }, [])
+  }, []);
 
   const handleRemoveMedia = useCallback(
     (indexToRemove: number) => {
-      setMediaToDelete(null)
-      const newMediaIds = mediaIds.filter((_, index) => index !== indexToRemove)
-      onMediaChange(newMediaIds)
+      setMediaToDelete(null);
+      const newMediaIds = mediaIds.filter(
+        (_, index) => index !== indexToRemove
+      );
+      onMediaChange(newMediaIds);
     },
-    [mediaIds, onMediaChange],
-  )
+    [mediaIds, onMediaChange]
+  );
 
   const handleDeleteMedia = useCallback(async () => {
-    if (!mediaToDelete) return
+    if (!mediaToDelete) return;
 
     try {
-      const { id, index } = mediaToDelete
-      const response = await deleteMedia(id)
+      const { id, index } = mediaToDelete;
+      const response = await deleteMedia(id);
 
       if (response.success) {
-        handleRemoveMedia(index)
+        handleRemoveMedia(index);
         toast({
           title: "Xóa thành công",
           description: "Đã xóa media thành công",
-        })
+        });
       } else {
-        throw new Error(response.message || "Không thể xóa media")
+        throw new Error(response.message || "Không thể xóa media");
       }
     } catch (error: any) {
-      console.error("Error deleting media:", error)
+      console.error("Error deleting media:", error);
       toast({
         title: "Lỗi xóa",
         description: error.message || "Không thể xóa media",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsDeleteDialogOpen(false)
-      setMediaToDelete(null)
+      setIsDeleteDialogOpen(false);
+      setMediaToDelete(null);
     }
-  }, [mediaToDelete, handleRemoveMedia])
+  }, [mediaToDelete, handleRemoveMedia]);
 
   const handleConfirmDelete = useCallback((mediaId: number, index: number) => {
-    setMediaToDelete({ id: mediaId, index })
-    setIsDeleteDialogOpen(true)
-  }, [])
+    setMediaToDelete({ id: mediaId, index });
+    setIsDeleteDialogOpen(true);
+  }, []);
 
   const handleRemoveDocument = useCallback(
     (indexToRemove: number) => {
-      setDocuments(documents.filter((_, index) => index !== indexToRemove))
+      setDocuments(documents.filter((_, index) => index !== indexToRemove));
     },
-    [documents],
-  )
+    [documents]
+  );
 
   const handlePreviewMedia = useCallback((mediaId: number) => {
-    setSelectedMediaId(mediaId)
-    setIsPreviewOpen(true)
-  }, [])
+    setSelectedMediaId(mediaId);
+    setIsPreviewOpen(true);
+  }, []);
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 Bytes"
-    const k = 1024
-    const sizes = ["Bytes", "KB", "MB", "GB"]
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-  }
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return (
+      Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+    );
+  };
 
   // Phần JSX giữ nguyên
   return (
@@ -273,7 +316,9 @@ export function PlantMediaTab({ mediaIds = [], onMediaChange, plantId, isLoading
       <Card>
         <CardHeader>
           <CardTitle>Hình ảnh & Tài liệu</CardTitle>
-          <CardDescription>Thêm hình ảnh và tài liệu liên quan đến cây dược liệu</CardDescription>
+          <CardDescription>
+            Thêm hình ảnh và tài liệu liên quan đến cây dược liệu
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Phần hình ảnh */}
@@ -319,7 +364,9 @@ export function PlantMediaTab({ mediaIds = [], onMediaChange, plantId, isLoading
                     style={{ width: `${uploadProgress}%` }}
                   ></div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1 text-center">{uploadProgress}% hoàn thành</p>
+                <p className="text-xs text-gray-500 mt-1 text-center">
+                  {uploadProgress}% hoàn thành
+                </p>
               </div>
             )}
 
@@ -327,7 +374,9 @@ export function PlantMediaTab({ mediaIds = [], onMediaChange, plantId, isLoading
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Chưa có hình ảnh</AlertTitle>
-                <AlertDescription>Vui lòng tải lên hình ảnh cho cây dược liệu này.</AlertDescription>
+                <AlertDescription>
+                  Vui lòng tải lên hình ảnh cho cây dược liệu này.
+                </AlertDescription>
               </Alert>
             )}
 
@@ -338,7 +387,11 @@ export function PlantMediaTab({ mediaIds = [], onMediaChange, plantId, isLoading
                     className="aspect-square bg-gray-100 rounded-md overflow-hidden cursor-pointer"
                     onClick={() => handlePreviewMedia(mediaId)}
                   >
-                    <MediaViewer mediaId={mediaId} className="w-full h-full object-cover" alt={`Ảnh ${index + 1}`} />
+                    <MediaViewer
+                      mediaId={mediaId}
+                      className="w-full h-full object-cover"
+                      alt={`Ảnh ${index + 1}`}
+                    />
                   </div>
                   <button
                     type="button"
@@ -354,12 +407,14 @@ export function PlantMediaTab({ mediaIds = [], onMediaChange, plantId, isLoading
               <div
                 className={cn(
                   "aspect-square border-2 border-dashed border-gray-300 rounded-md flex flex-col items-center justify-center p-4 hover:bg-gray-50",
-                  !isLoading && "cursor-pointer",
+                  !isLoading && "cursor-pointer"
                 )}
                 onClick={isLoading ? undefined : handleOpenFileDialog}
               >
                 <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                <p className="text-sm text-gray-500 text-center">Tải lên hình ảnh</p>
+                <p className="text-sm text-gray-500 text-center">
+                  Tải lên hình ảnh
+                </p>
               </div>
             </div>
           </div>
@@ -371,12 +426,14 @@ export function PlantMediaTab({ mediaIds = [], onMediaChange, plantId, isLoading
             <div
               className={cn(
                 "border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center",
-                !isLoading && "cursor-pointer",
+                !isLoading && "cursor-pointer"
               )}
               onClick={isLoading ? undefined : handleOpenDocumentDialog}
             >
               <Upload className="h-10 w-10 text-gray-400 mb-2" />
-              <p className="text-sm font-medium text-gray-700">Kéo thả tài liệu vào đây</p>
+              <p className="text-sm font-medium text-gray-700">
+                Kéo thả tài liệu vào đây
+              </p>
               <p className="text-xs text-gray-500 mt-1">Hoặc</p>
               <Button
                 type="button"
@@ -384,14 +441,16 @@ export function PlantMediaTab({ mediaIds = [], onMediaChange, plantId, isLoading
                 size="sm"
                 className="mt-2"
                 onClick={(e) => {
-                  e.stopPropagation()
-                  handleOpenDocumentDialog()
+                  e.stopPropagation();
+                  handleOpenDocumentDialog();
                 }}
                 disabled={isLoading}
               >
                 Chọn tài liệu
               </Button>
-              <p className="text-xs text-gray-500 mt-2">PDF, DOC, DOCX, XLS, XLSX (Tối đa 10MB)</p>
+              <p className="text-xs text-gray-500 mt-2">
+                PDF, DOC, DOCX, XLS, XLSX (Tối đa 10MB)
+              </p>
               <input
                 type="file"
                 ref={documentInputRef}
@@ -406,7 +465,10 @@ export function PlantMediaTab({ mediaIds = [], onMediaChange, plantId, isLoading
             {documents.length > 0 && (
               <div className="space-y-2 mt-4">
                 {documents.map((doc, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
+                  >
                     <div className="flex items-center">
                       <div className="bg-blue-100 p-2 rounded mr-3">
                         <FileText className="h-4 w-4 text-blue-600" />
@@ -441,10 +503,15 @@ export function PlantMediaTab({ mediaIds = [], onMediaChange, plantId, isLoading
           </DialogHeader>
           <div className="py-4">
             <p>Bạn có chắc chắn muốn xóa media này không?</p>
-            <p className="text-sm text-gray-500 mt-2">Hành động này không thể hoàn tác.</p>
+            <p className="text-sm text-gray-500 mt-2">
+              Hành động này không thể hoàn tác.
+            </p>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Hủy
             </Button>
             <Button variant="destructive" onClick={handleDeleteMedia}>
@@ -473,17 +540,6 @@ export function PlantMediaTab({ mediaIds = [], onMediaChange, plantId, isLoading
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }
 
-// const Tổng = "Tổng"
-// const kết = "kết"
-// const các = "các"
-// const cải = "cải"
-// const tiến = "tiến"
-
-// const Tôi = "Tôi"
-// const đã = "đã"
-// const thực = "thực"
-// const hiện = "hiện"
-// const nhiều = "nhiều"

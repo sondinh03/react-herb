@@ -8,7 +8,7 @@ export async function GET(
 ) {
   return callApiGet(
     request,
-    `/api/plants/${params.id}/media-ids`,
+    `/api/plants/${params.id}/media-featured`,
     "thành công",
     {requireAuth: false}
   );
