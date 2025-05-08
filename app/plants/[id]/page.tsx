@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
   Edit,
@@ -14,144 +14,179 @@ import {
   Leaf,
   FlaskRoundIcon as Flask,
   Map,
-} from "lucide-react"
-import { useEffect, useState } from "react"
-import { toast } from "@/hooks/use-toast"
-import { MediaViewer } from "@/components/media/media-viewer"
-import { Plant } from "@/app/types/plant"
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "@/hooks/use-toast";
+import { MediaViewer } from "@/components/media/media-viewer";
+import { Plant } from "@/app/types/plant";
+import { MediaCarousel, MediaItem } from "@/components/media/media-carousel";
+import { fetchApi } from "@/lib/api-client";
 
-// Interface for media items
-interface MediaItem {
-  id: string
-  url: string
-  alt: string
-}
-
-export default function PlantDetailPage({ params }: { params: { id: string } }) {
-  const plantId = params.id
-  const [plant, setPlant] = useState<Plant | null>(null)
-  const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
-  const [isPlantLoading, setIsPlantLoading] = useState(true)
-  const [isMediaLoading, setIsMediaLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export default function PlantDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const plantId = params.id;
+  const [plant, setPlant] = useState<Plant | null>(null);
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  const [isPlantLoading, setIsPlantLoading] = useState(true);
+  const [isMediaLoading, setIsMediaLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch plant details
-  useEffect(() => {
-    const fetchPlantDetails = async () => {
-      console.log("Starting fetchPlantDetails")
-      setIsPlantLoading(true)
-      try {
-        const response = await fetch(`/api/plants/${plantId}`)
-        console.log("fetchPlantDetails response:", response.status)
-        if (!response.ok) {
-          throw new Error("Không thể lấy thông tin cây dược liệu")
+  const fetchPlantDetails = async () => {
+    setIsPlantLoading(true);
+    setError(null);
+
+    try {
+      const id = plantId;
+      const result = await fetchApi<Plant>(`/api/plants/${id}`);
+      setPlant(result.data || null);
+    } catch (err: any) {
+      setError(err.message || "Không thể lấy thông tin cây dược liệu");
+      toast({
+        title: "Lỗi",
+        description: err.message || "Không thể lấy thông tin cây dược liệu",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPlantLoading(false);
+    }
+  };
+
+  // Fetch media IDs with improved error handling and timeout
+  const fetchMediaIds = async () => {
+    if (!plantId) {
+      setMediaItems([]);
+      setIsMediaLoading(false);
+      return;
+    }
+
+    setIsMediaLoading(true);
+    try {
+      // Create a controller for request abortion
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+      const result = await fetchApi<{ data: string[] }>(
+        `/api/plants/${plantId}/media-ids`,
+        { signal: controller.signal }
+      );
+
+      clearTimeout(timeoutId);
+
+      if (result.code == 200 && result.data) {
+        const mediaIds = Array.isArray(result.data) ? result.data : [];
+        const items: MediaItem[] = mediaIds.map(
+          (id: string, index: number) => ({
+            id,
+            url: `/api/media/${id}`,
+            alt: `Hình ảnh ${plant?.name || "cây dược liệu"} ${index + 1}`,
+          })
+        );
+
+        // Fallback to plant.images if mediaIds is empty and images exist
+        if (items.length === 0 && plant?.images?.length) {
+          createFallbackMediaItems();
+        } else {
+          setMediaItems(items);
         }
-        const data = await response.json()
-        setPlant(data.data)
-      } catch (err: any) {
-        console.error("fetchPlantDetails error:", err)
-        setError(err.message)
+      } else {
+        throw new Error(result.message || "Không thể tải danh sách hình ảnh");
+      }
+    } catch (error: any) {
+      console.error("fetchMediaIds error:", error);
+      if (error.name !== "AbortError") {
         toast({
           title: "Lỗi",
-          description: err.message,
+          description: error.message || "Không thể tải danh sách hình ảnh",
           variant: "destructive",
-        })
-      } finally {
-        setIsPlantLoading(false)
-        console.log("fetchPlantDetails completed")
+        });
+
+        // Fallback to plant.images on error if available
+        createFallbackMediaItems();
       }
+    } finally {
+      setIsMediaLoading(false);
+    }
+  };
+
+  // Helper function to create fallback media items
+  const createFallbackMediaItems = () => {
+    if (plant?.images?.length) {
+      const fallbackItems: MediaItem[] = plant.images.map((url, index) => ({
+        id: `fallback-${index}`,
+        url,
+        alt: `Hình ảnh ${plant?.name || "cây dược liệu"} ${index + 1}`,
+      }));
+      setMediaItems(fallbackItems);
+    }
+  };
+
+  const handleDeletePlant = async () => {
+    if (!confirm("Bạn có chắc chắn muốn xóa cây dược liệu này?")) {
+      return;
     }
 
-    fetchPlantDetails()
-  }, [plantId])
+    try {
+      const result = await fetchApi(`/api/plants/${plantId}`, {
+        method: "DELETE",
+      });
 
-  // Fetch media IDs
+      if (result.code == 200) {
+        toast({
+          title: "Thành công",
+          description: "Đã xóa cây dược liệu thành công!",
+        });
+        // Redirect to plants page
+        window.location.href = "/plants";
+      } else {
+        throw new Error(result.message || "Không thể xóa cây dược liệu");
+      }
+    } catch (err: any) {
+      toast({
+        title: "Lỗi",
+        description: err.message || "Không thể xóa cây dược liệu",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
-    const fetchMediaIds = async () => {
-      if (!plantId) {
-        setMediaItems([])
-        setIsMediaLoading(false)
-        return
-      }
+    fetchPlantDetails();
+  }, [plantId]);
 
-      console.log("Starting fetchMediaIds")
-      try {
-        setIsMediaLoading(true)
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5s timeout
-
-        const response = await fetch(`/api/plants/${plantId}/media-ids`, {
-          signal: controller.signal,
-        })
-
-        console.log("fetchMediaIds response:", response.status)
-        clearTimeout(timeoutId)
-
-        if (!response.ok) {
-          throw new Error(`Lỗi khi tải danh sách hình ảnh: ${response.status}`)
-        }
-
-        const result = await response.json()
-        console.log("fetchMediaIds result:", result)
-
-        if (result.success) {
-          const mediaIds = result.data || []
-          const items: MediaItem[] = mediaIds.map((id: string, index: number) => ({
-            id,
-            url: `/api/media/${id}`, // Adjust URL pattern if needed
-            alt: `Hình ảnh ${plant?.name || "cây dược liệu"} ${index + 1}`,
-          }))
-          // Fallback to plant.images if mediaIds is empty and images exist
-          if (items.length === 0 && plant?.images?.length) {
-            const fallbackItems: MediaItem[] = plant.images.map((url, index) => ({
-              id: `fallback-${index}`,
-              url,
-              alt: `Hình ảnh ${plant?.name || "cây dược liệu"} ${index + 1}`,
-            }))
-            setMediaItems(fallbackItems)
-          } else {
-            setMediaItems(items)
-          }
-        } else {
-          throw new Error(result.message || "Không thể tải danh sách hình ảnh")
-        }
-      } catch (error: any) {
-        console.error("fetchMediaIds error:", error)
-        if (error.name !== "AbortError") {
-          toast({
-            title: "Lỗi",
-            description: error.message || "Không thể tải danh sách hình ảnh",
-            variant: "destructive",
-          })
-          // Fallback to plant.images on error if available
-          if (plant?.images?.length) {
-            const fallbackItems: MediaItem[] = plant.images.map((url, index) => ({
-              id: `fallback-${index}`,
-              url,
-              alt: `Hình ảnh ${plant?.name || "cây dược liệu"} ${index + 1}`,
-            }))
-            setMediaItems(fallbackItems)
-          }
-        }
-      } finally {
-        setIsMediaLoading(false)
-        console.log("fetchMediaIds completed")
-      }
+  useEffect(() => {
+    if (plant) {
+      fetchMediaIds();
     }
-
-    fetchMediaIds()
-  }, [plantId, plant])
+  }, [plant, plantId]);
 
   if (isPlantLoading) {
-    return <div className="text-center py-12">Đang tải...</div>
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex justify-center">
+        <div className="text-center py-12">
+          Đang tải thông tin cây dược liệu...
+        </div>
+      </div>
+    );
   }
 
+  // Error state
   if (error || !plant) {
     return (
-      <div className="text-center py-12 text-red-600">
-        {error || "Không thể tải thông tin cây dược liệu"}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex justify-center">
+        <div className="text-center py-12 text-red-600">
+          {error || "Không thể tải thông tin cây dược liệu"}
+          <div className="mt-4">
+            <Link href="/plants">
+              <Button variant="outline">Quay lại danh sách</Button>
+            </Link>
+          </div>
+        </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -204,13 +239,11 @@ export default function PlantDetailPage({ params }: { params: { id: string } }) 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div className="md:col-span-1">
               {isMediaLoading ? (
-                <div className="bg-green-50 rounded-lg p-4 text-center">
-                  Đang tải hình ảnh...
-                </div>
+                <div className="h-full w-full animate-pulse bg-gray-200 rounded-lg"></div>
               ) : mediaItems.length > 0 ? (
-                <MediaViewer mediaItems={mediaItems} />
+                <MediaCarousel mediaItems={mediaItems} />
               ) : (
-                <div className="bg-green-50 rounded-lg p-4 text-center">
+                <div className="h-full flex items-center justify-center text-gray-500">
                   Không có hình ảnh nào.
                 </div>
               )}
@@ -266,7 +299,9 @@ export default function PlantDetailPage({ params }: { params: { id: string } }) 
                     <Leaf className="h-5 w-5 mr-2 text-green-600" />
                     Đặc điểm thực vật
                   </h2>
-                  <p className="text-gray-700">{plant.botanicalCharacteristics}</p>
+                  <p className="text-gray-700">
+                    {plant.botanicalCharacteristics}
+                  </p>
                   <p className="text-gray-700">
                     <strong>Thân:</strong> {plant.stem}
                   </p>
@@ -336,8 +371,8 @@ export default function PlantDetailPage({ params }: { params: { id: string } }) 
             <TabsContent value="nghien-cuu" className="space-y-4">
               <h3 className="text-lg font-semibold">Các nghiên cứu khoa học</h3>
               <p className="text-gray-700">
-                Hiện chưa có nghiên cứu khoa học cụ thể được cung cấp trong dữ liệu. Vui lòng kiểm tra lại hoặc liên hệ
-                quản trị viên.
+                Hiện chưa có nghiên cứu khoa học cụ thể được cung cấp trong dữ
+                liệu. Vui lòng kiểm tra lại hoặc liên hệ quản trị viên.
               </p>
               <div className="mt-6 text-center">
                 <Link href={`/research?plant=${plantId}`}>
@@ -349,8 +384,8 @@ export default function PlantDetailPage({ params }: { params: { id: string } }) 
             <TabsContent value="bai-viet" className="space-y-4">
               <h3 className="text-lg font-semibold">Bài viết liên quan</h3>
               <p className="text-gray-700">
-                Hiện chưa có bài viết liên quan được cung cấp trong dữ liệu. Vui lòng kiểm tra lại hoặc liên hệ quản trị
-                viên.
+                Hiện chưa có bài viết liên quan được cung cấp trong dữ liệu. Vui
+                lòng kiểm tra lại hoặc liên hệ quản trị viên.
               </p>
               <div className="mt-6 text-center">
                 <Link href={`/articles?plant=${plantId}`}>
@@ -362,5 +397,5 @@ export default function PlantDetailPage({ params }: { params: { id: string } }) 
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -8,8 +8,8 @@ export async function GET(
 ) {
   return callApiGet(
     request,
-    `/api/plants/${params.id}`,
+    `/api/plants/${(await params).id}`,
     "Lấy thông tin cây dược liệu thành công",
-    {requireAuth: false}
+    { requireAuth: false }
   );
 }

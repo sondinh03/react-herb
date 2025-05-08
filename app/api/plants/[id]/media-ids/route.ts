@@ -1,6 +1,5 @@
-// File: app/api/plants/[id]/route.ts
-import { NextRequest, NextResponse } from "next/server";
 import { callApiGet } from "@/lib/api-utils";
+import { NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
@@ -10,6 +9,6 @@ export async function GET(
     request,
     `/api/plants/${params.id}/media-ids`,
     "thành công",
-    {requireAuth: false}
+    { requireAuth: false }
   );
 }

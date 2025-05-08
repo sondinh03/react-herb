@@ -1,4 +1,7 @@
+import { DivideCircle } from "lucide-react";
 import { OptimizedPagination } from "./optimized-pagination";
+import { Pagination } from "./pagination";
+import { Skeleton } from "./ui/skeleton";
 import {
   Table,
   TableBody,
@@ -41,6 +44,17 @@ interface DataTableProps<T> {
     display?: string;
   };
 }
+
+// const customLoadingComponent = (
+//   <div className="py-10">
+//     {Array.from({ length: 3 }).map((_, index) => (
+//       <div key={index} className="flex justify-between px-4 py-2 border-b border-green-100">
+//         <Skeleton className="h-6 w-full mx-2 bg-green-100" />
+//         <Skeleton className="h-6 w-full mx-2 bg-green-100" />
+//       </div>
+//     ))}
+//   </div>
+// );
 
 export function DataTable<T>({
   data,
@@ -91,9 +105,11 @@ export function DataTable<T>({
                   {loadingComponent || (
                     <>
                       <div className="flex justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-700"></div>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
                       </div>
-                      <div className="mt-2 text-gray-600">Loading data...</div>
+                      <div className="mt-2 text-gray-600">
+                        Đang tải dữ liệu...
+                      </div>
                     </>
                   )}
                 </TableCell>
@@ -128,10 +144,7 @@ export function DataTable<T>({
                   className="hover:bg-green-50 transition-colors"
                 >
                   {columns.map((column, colIndex) => (
-                    <TableCell
-                      key={colIndex}
-                      className={column.className}
-                    >
+                    <TableCell key={colIndex} className={column.className}>
                       {column.cell(item)}
                     </TableCell>
                   ))}
@@ -142,10 +155,9 @@ export function DataTable<T>({
         </Table>
       </div>
 
-      {/* Pagination */}
       {showPagination && !isLoading && !error && data.length > 0 && (
-        <div className="flex items-center justify-between px-4 py-4 border-t border-green-100 bg-green-50/30">
-          <OptimizedPagination
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 border-t border-green-100 bg-green-50/30 mt-8">
+          <Pagination
             currentPage={pagination.currentPage + 1}
             totalPages={pagination.totalPages}
             totalItems={pagination.totalElements}
@@ -153,7 +165,7 @@ export function DataTable<T>({
             showPageSizeSelector={!!onPageSizeChange}
             onPageChange={onPageChange}
             onPageSizeChange={onPageSizeChange}
-            labels={labels}
+            className="mt-12"
           />
         </div>
       )}

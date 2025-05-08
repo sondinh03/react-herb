@@ -17,6 +17,8 @@ import { Eye, EyeOff, Leaf } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { AUTH_ERRORS } from "../api/login/error-messages";
+import { ROLE_TYPES } from "@/constant/user";
+import { handleWait } from "@/components/header";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,12 +34,12 @@ export default function LoginPage() {
     // Kiểm tra nếu đã có accessToken trong localStorage
     const accessToken = localStorage.getItem("accessToken");
     const userData = localStorage.getItem("userData");
-    
+
     if (accessToken && userData) {
       try {
         const user = JSON.parse(userData);
         // Đã đăng nhập, chuyển hướng người dùng tới trang thích hợp
-        if (user.roleType === 1) {
+        if (user.roleType === ROLE_TYPES.ADMIN) {
           router.push("/admin");
         } else {
           router.push("/");
@@ -108,9 +110,9 @@ export default function LoginPage() {
       }
 
       // Reset password field
-      setFormData(prevState => ({
+      setFormData((prevState) => ({
         ...prevState,
-        password: ""
+        password: "",
       }));
     } catch (error: any) {
       console.error("Login error:", error);
@@ -121,11 +123,11 @@ export default function LoginPage() {
         variant: "destructive",
         duration: 3000,
       });
-      
+
       // Reset password field khi đăng nhập thất bại
-      setFormData(prevState => ({
+      setFormData((prevState) => ({
         ...prevState,
-        password: ""
+        password: "",
       }));
     } finally {
       setIsLoading(false);
@@ -151,7 +153,9 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-green-700">Email hoặc Tên đăng nhập</Label>
+              <Label htmlFor="email" className="text-green-700">
+                Email hoặc Tên đăng nhập
+              </Label>
               <Input
                 id="email"
                 type="text"
@@ -162,15 +166,23 @@ export default function LoginPage() {
                 required
                 autoComplete="username"
                 className="border-green-300 focus:border-green-500 focus:ring-green-500 hover:border-green-400 text-green-800"
-                style={{ "--tw-ring-color": "rgb(34 197 94 / 0.5)" } as React.CSSProperties}
+                style={
+                  {
+                    "--tw-ring-color": "rgb(34 197 94 / 0.5)",
+                  } as React.CSSProperties
+                }
               />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-green-700">Mật khẩu</Label>
+                <Label htmlFor="password" className="text-green-700">
+                  Mật khẩu
+                </Label>
                 <Link
-                  href="/forgot-password"
+                  // href="/forgot-password"
+                  href={"/login"}
                   className="text-sm font-medium text-green-600 hover:text-green-800 hover:underline"
+                  onClick={handleWait}
                 >
                   Quên mật khẩu?
                 </Link>
@@ -179,14 +191,18 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder="Nhập mật khẩu"
                   value={formData.password}
                   onChange={handleInputChange}
                   disabled={isLoading}
                   required
                   autoComplete="current-password"
                   className="border-green-300 focus:border-green-500 focus:ring-green-500 hover:border-green-400 text-green-800 placeholder:text-green-800"
-                  style={{ "--tw-ring-color": "rgb(34 197 94 / 0.5)" } as React.CSSProperties}
+                  style={
+                    {
+                      "--tw-ring-color": "rgb(34 197 94 / 0.5)",
+                    } as React.CSSProperties
+                  }
                 />
                 <Button
                   type="button"
@@ -207,9 +223,9 @@ export default function LoginPage() {
                 </Button>
               </div>
             </div>
-            <Button 
-              className="w-full bg-green-600 hover:bg-green-700 text-white focus:ring-2 focus:ring-green-500 focus:ring-offset-2" 
-              type="submit" 
+            <Button
+              className="w-full bg-green-600 hover:bg-green-700 text-white focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              type="submit"
               disabled={isLoading}
             >
               {isLoading ? "Đang xử lý..." : "Đăng nhập"}

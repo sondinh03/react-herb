@@ -35,6 +35,14 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { User } from "@/app/types/user";
+import {
+  ROLE_TYPE_LABELS,
+  ROLE_TYPES,
+  STATUS_LABELS,
+  STATUSES,
+} from "@/constant/user";
+import { Spinner } from "@/components/spinner";
 
 // Định nghĩa schema validation cho form chỉnh sửa
 const userEditFormSchema = z.object({
@@ -59,14 +67,14 @@ const userEditFormSchema = z.object({
 
 type UserEditFormValues = z.infer<typeof userEditFormSchema>;
 
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  fullName: string;
-  roleType: number;
-  status: number;
-}
+// interface User {
+//   id: number;
+//   username: string;
+//   email: string;
+//   fullName: string;
+//   roleType: number;
+//   status: number;
+// }
 
 export default function EditUserPage() {
   const router = useRouter();
@@ -164,7 +172,7 @@ export default function EditUserPage() {
         toast.success({
           title: "Thành công",
           description: "Cập nhật thông tin người dùng thành công",
-        })
+        });
         router.push(`/admin/users/${userId}`);
       } else {
         toast({
@@ -188,14 +196,7 @@ export default function EditUserPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto py-8 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-current border-r-transparent"></div>
-          <p className="mt-4">Đang tải thông tin người dùng...</p>
-        </div>
-      </div>
-    );
+    return <Spinner></Spinner>;
   }
 
   if (error || !user) {
@@ -351,11 +352,18 @@ export default function EditUserPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="1">
-                            Quản trị viên hệ thống
+                          <SelectItem value={ROLE_TYPES.ADMIN.toString()}>
+                            {ROLE_TYPE_LABELS[ROLE_TYPES.ADMIN]}
                           </SelectItem>
-                          <SelectItem value="2">Biên tập viên</SelectItem>
-                          <SelectItem value="3">Người dùng thường</SelectItem>
+                          <SelectItem value={ROLE_TYPES.EDITOR.toString()}>
+                            {ROLE_TYPE_LABELS[ROLE_TYPES.EDITOR]}
+                          </SelectItem>
+                          <SelectItem value={ROLE_TYPES.EXPERT.toString()}>
+                            {ROLE_TYPE_LABELS[ROLE_TYPES.EXPERT]}
+                          </SelectItem>
+                          <SelectItem value={ROLE_TYPES.USER.toString()}>
+                            {ROLE_TYPE_LABELS[ROLE_TYPES.USER]}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -379,9 +387,21 @@ export default function EditUserPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="1">Hoạt động</SelectItem>
-                          <SelectItem value="2">Không hoạt động</SelectItem>
-                          <SelectItem value="3">Đã chặn</SelectItem>
+                          <SelectItem value={STATUSES.ACTIVE.toString()}>
+                            {STATUS_LABELS[STATUSES.ACTIVE]}
+                          </SelectItem>
+                          <SelectItem value={STATUSES.INACTIVE.toString()}>
+                            {STATUS_LABELS[STATUSES.INACTIVE]}
+                          </SelectItem>
+                          <SelectItem value={STATUSES.BANNED.toString()}>
+                            {STATUS_LABELS[STATUSES.BANNED]}
+                          </SelectItem>
+                          <SelectItem value={STATUSES.PENDING.toString()}>
+                            {STATUS_LABELS[STATUSES.PENDING]}
+                          </SelectItem>
+                          <SelectItem value={STATUSES.DELETED.toString()}>
+                            {STATUS_LABELS[STATUSES.DELETED]}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
