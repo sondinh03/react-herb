@@ -21,6 +21,11 @@ export const API_ERRORS = {
     code: 404,
     message: "Không tìm thấy tài nguyên",
   },
+  METHOD_NOT_ALLOWED: {
+    success: false,
+    code: 405,
+    message: "Phương thức không được phép",
+  },
   TIMEOUT_ERROR: {
     success: false,
     code: 408,
@@ -163,13 +168,36 @@ export async function callApi(
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
   successMessage: string,
-  options: { requireAuth?: boolean } = { requireAuth: true }
+  options: {
+    requireAuth?: boolean;
+    cache?: RequestCache;
+    revalidate?: number;
+    cacheControl?: string;
+  } = { requireAuth: true }
 ): Promise<NextResponse> {
   try {
+    if (request.method !== method && request.method !== "OPTIONS") {
+      return NextResponse.json(API_ERRORS.METHOD_NOT_ALLOWED, {
+        status: 405,
+        headers: { Allow: method },
+      });
+    }
+
+    // Xử lý yêu cầu OPTIONS cho CORS
+    if (request.method === "OPTIONS") {
+      return new NextResponse(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Methods": method,
+          "Access-Control-Allow-Headers": "Authorization, Content-Type",
+          "Access-Control-Allow-Origin": "*", // Điều chỉnh theo nhu cầu
+        },
+      });
+    }
+
     // Build API URL
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
     const fullUrl = `${apiUrl}${endpoint}`;
-
     const headers: HeadersInit = {
       "Content-Type": "application/json",
     };
@@ -186,13 +214,25 @@ export async function callApi(
     const requestOptions: RequestInit = {
       method,
       headers,
+      cache: options.cache,
+      next: options.revalidate ? { revalidate: options.revalidate } : undefined,
     };
 
-    // Extract request body for methods that need it
-    if (method !== "GET" && method !== "HEAD") {
-      const body = await request.json();
-      requestOptions.body = JSON.stringify(body);
+    // Chỉ parse body cho POST, PUT, PATCH nếu có dữ liệu
+    if (["POST", "PUT", "PATCH"].includes(method)) {
+      const contentLength = request.headers.get("content-length");
+      if (contentLength && parseInt(contentLength) > 0) {
+        try {
+          const body = await request.json();
+          requestOptions.body = JSON.stringify(body);
+        } catch (error) {
+          return NextResponse.json(API_ERRORS.BAD_REQUEST, { status: 400 });
+        }
+      }
     }
+
+    // Ghi log chi tiết yêu cầu
+    console.log(`Gọi API: ${method} ${fullUrl}`, { headers });
 
     // Call the API
     const response = await fetch(fullUrl, requestOptions);
@@ -231,11 +271,20 @@ export async function callApi(
     }
 
     const data = await response.json();
-    return NextResponse.json({
-      success: true,
-      data: data.data || data,
-      message: successMessage,
-    });
+    const responseHeaders = new Headers();
+    if (options.cacheControl) {
+      responseHeaders.set("Cache-Control", options.cacheControl);
+    }
+
+    return NextResponse.json(
+      {
+        code: 200,
+        success: true,
+        data: data.data || data,
+        message: successMessage,
+      },
+      { headers: responseHeaders }
+    );
   } catch (error: any) {
     console.error(
       `Unexpected error in callApi ${method} (${endpoint}):`,
@@ -333,9 +382,11 @@ export async function handleApiSearchRequest(
 
       const data = await response.json();
       return NextResponse.json({
+        code: 200,
         success: true,
         data: data.data || data, // Trường hợp API trả về trực tiếp data hoặc nested trong data
         message: "Lấy dữ liệu thành công",
+        // total: data.data.totalElements || 0,
       });
     } catch (fetchError: any) {
       // Handle fetch errors
@@ -363,95 +414,13 @@ export const callApiGet = (
   req: NextRequest,
   endpoint: string,
   successMessage: string,
-  options?: { requireAuth?: boolean }
+  options: {
+    requireAuth?: boolean;
+    cache?: RequestCache;
+    revalidate?: number;
+    cacheControl?: string;
+  } = {}
 ) => callApi(req, endpoint, "GET", successMessage, options);
-
-/*
-export async function callApiPost(
-  request: NextRequest,
-  endpoint: string,
-  successMessage: string
-): Promise<NextResponse> {
-  try {
-    // Extract token from the request
-    const token = extractToken(request);
-    if (!token) {
-      return NextResponse.json(API_ERRORS.UNAUTHORIZED, { status: 401 });
-    }
-
-    // Extract request body
-    const body = await request.json();
-
-    // Build API URL
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
-    const fullUrl = `${apiUrl}${endpoint}`;
-
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
-
-    // Call the API
-    const response = await fetch(fullUrl, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const errorMapping: Record<number, any> = {
-        400: API_ERRORS.BAD_REQUEST,
-        401: API_ERRORS.UNAUTHORIZED,
-        403: API_ERRORS.FORBIDDEN,
-        404: API_ERRORS.NOT_FOUND,
-        500: API_ERRORS.SYSTEM_ERROR,
-      };
-
-      let errorMessage;
-
-      try {
-        const errorBody = await response.text();
-        if (errorBody.trim()) {
-          const parsedErrorBody = JSON.parse(errorBody);
-          errorMessage = parsedErrorBody.message;
-        }
-      } catch {
-        errorMessage = undefined;
-      }
-
-      const mappedError = errorMapping[response.status] || {
-        ...API_ERRORS.DEFAULT_ERROR,
-        code: response.status,
-      };
-
-      if (errorMessage) {
-        mappedError.message = errorMessage;
-      }
-
-      return NextResponse.json(mappedError, { status: response.status });
-    }
-
-    const data = await response.json();
-    return NextResponse.json({
-      success: true,
-      data: data.data || data,
-      message: successMessage,
-    });
-  } catch (error: any) {
-    console.error(`Unexpected error in callApiPost (${endpoint}):`, error);
-
-    if (error.name === "AbortError") {
-      return NextResponse.json(API_ERRORS.TIMEOUT_ERROR, {
-        status: API_ERRORS.TIMEOUT_ERROR.code,
-      });
-    }
-
-    return NextResponse.json(API_ERRORS.DEFAULT_ERROR, {
-      status: API_ERRORS.DEFAULT_ERROR.code,
-    });
-  }
-}
-  */
 
 export const callApiPost = (
   req: NextRequest,

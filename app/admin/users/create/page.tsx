@@ -34,6 +34,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import {
+  ROLE_TYPE_LABELS,
+  ROLE_TYPES,
+  STATUS_LABELS,
+  STATUSES,
+} from "@/constant/user";
 
 // Định nghĩa schema validation
 const userFormSchema = z
@@ -285,7 +291,8 @@ export default function CreateUserPage() {
                       <FormLabel>Vai trò</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        // defaultValue={field.value}
+                        defaultValue={ROLE_TYPES.USER.toString()}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -293,10 +300,17 @@ export default function CreateUserPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="1">Người dùng thường</SelectItem>
-                          <SelectItem value="2">Biên tập viên</SelectItem>
-                          <SelectItem value="3">
-                            Quản trị viên hệ thống
+                          <SelectItem value={ROLE_TYPES.ADMIN.toString()}>
+                            {ROLE_TYPE_LABELS[ROLE_TYPES.ADMIN]}
+                          </SelectItem>
+                          <SelectItem value={ROLE_TYPES.EDITOR.toString()}>
+                            {ROLE_TYPE_LABELS[ROLE_TYPES.EDITOR]}
+                          </SelectItem>
+                          <SelectItem value={ROLE_TYPES.EXPERT.toString()}>
+                            {ROLE_TYPE_LABELS[ROLE_TYPES.EXPERT]}
+                          </SelectItem>
+                          <SelectItem value={ROLE_TYPES.USER.toString()}>
+                            {ROLE_TYPE_LABELS[ROLE_TYPES.USER]}
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -313,7 +327,8 @@ export default function CreateUserPage() {
                       <FormLabel>Trạng thái</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        defaultValue={STATUSES.ACTIVE.toString()}
+                        disabled={true}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -321,9 +336,21 @@ export default function CreateUserPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="1">Active</SelectItem>
-                          <SelectItem value="2">Inactive</SelectItem>
-                          <SelectItem value="3">Locked</SelectItem>
+                          <SelectItem value={STATUSES.ACTIVE.toString()}>
+                            {STATUS_LABELS[STATUSES.ACTIVE]}
+                          </SelectItem>
+                          <SelectItem value={STATUSES.INACTIVE.toString()}>
+                            {STATUS_LABELS[STATUSES.INACTIVE]}
+                          </SelectItem>
+                          <SelectItem value={STATUSES.BANNED.toString()}>
+                            {STATUS_LABELS[STATUSES.BANNED]}
+                          </SelectItem>
+                          <SelectItem value={STATUSES.PENDING.toString()}>
+                            {STATUS_LABELS[STATUSES.PENDING]}
+                          </SelectItem>
+                          <SelectItem value={STATUSES.DELETED.toString()}>
+                            {STATUS_LABELS[STATUSES.DELETED]}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

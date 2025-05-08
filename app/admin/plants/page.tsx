@@ -42,6 +42,7 @@ import { SearchPanel } from "@/components/SearchPanel";
 import { DataTable } from "@/components/DataTable";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Plant {
   id: number;

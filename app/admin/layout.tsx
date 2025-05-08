@@ -30,6 +30,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeProvider } from "@/components/theme-provider";
+import { fetchApi } from "@/lib/api-client";
+import { headers } from "next/headers";
+import { HerbResponse } from "@/types/api";
+import { useLogout } from "@/hooks/use-logout";
 
 interface NavItem {
   title: string;
@@ -85,9 +89,27 @@ export default function AdminLayout({
   const router = useRouter();
 
   const handleLogout = async () => {
+    const token = localStorage.getItem("accessToken");
+
+    const result = await fetchApi<HerbResponse<Boolean>>("/auth/logout", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    
+
+    // if (result) {
+    //   localStorage.removeItem("accessToken");
+    //   localStorage.removeItem("refreshToken");
+    //   localStorage.removeItem("userData");
+    //   router.push("/");
+    // }
+
     localStorage.removeItem("accessToken");
-    router.push("/login");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("userData");
+      router.push("/");
   };
+
+  const logout = useLogout();
 
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -284,7 +306,7 @@ export default function AdminLayout({
                         <span>Cài đặt</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleLogout}>
+                      <DropdownMenuItem onClick={logout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Đăng xuất</span>
                       </DropdownMenuItem>

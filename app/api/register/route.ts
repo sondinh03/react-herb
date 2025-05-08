@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { API_ERRORS, extractToken } from "@/lib/api-utils";
+import { API_ERRORS, callApiPost, extractToken } from "@/lib/api-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
         : "Đăng ký thành công";
 
       return NextResponse.json({
+        code: 200,
         success: true,
         data: data.data || data,
         message: successMessage,
@@ -95,3 +96,22 @@ export async function POST(request: NextRequest) {
     });
   }
 }
+/*
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const isAdminCreation = body.isAdminCreation === true;
+    const endpoint = isAdminCreation ? "/api/users/create" : "/api/auth/register";
+    const successMessage = isAdminCreation ? "Tạo người dùng thành công" : "Đăng ký thành công";
+
+    return await callApiPost(request, endpoint, successMessage, {
+      requireAuth: isAdminCreation,
+    });
+  } catch (error: any) {
+    console.error("Error in /api/register:", error);
+    return NextResponse.json(API_ERRORS.DEFAULT_ERROR, {
+      status: API_ERRORS.DEFAULT_ERROR.code,
+    });
+  }
+}
+  */

@@ -26,6 +26,7 @@ export interface Plant {
   folkRemedies: string;
   sideEffects: string;
   featured: boolean;
+  featuredMediaId: number;
   views: number;
   images?: string[]; // Thêm trường images để quản lý hình ảnh
   category?: string; // Thêm trường category

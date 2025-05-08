@@ -44,17 +44,13 @@ import { SearchPanel } from "@/components/SearchPanel";
 import { DataTable } from "@/components/DataTable";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
-
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  fullName: string;
-  roleType: number;
-  status: number;
-  lastLogin: string;
-  createdAt: string;
-}
+import {
+  ROLE_TYPE_LABELS,
+  ROLE_TYPES,
+  STATUS_LABELS,
+  STATUSES,
+} from "@/constant/user";
+import { User } from "@/app/types/user";
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -129,16 +125,20 @@ export default function AdminUsersPage() {
         let badgeVariant: "default" | "secondary" | "destructive" = "default";
 
         switch (user.roleType) {
-          case 1:
-            roleName = "Quản trị hệ thống";
+          case ROLE_TYPES.ADMIN:
+            roleName = ROLE_TYPE_LABELS[ROLE_TYPES.ADMIN];
             badgeVariant = "destructive";
             break;
-          case 2:
-            roleName = "Biên tập viên";
+          case ROLE_TYPES.EDITOR:
+            roleName = ROLE_TYPE_LABELS[ROLE_TYPES.EDITOR];
             badgeVariant = "secondary";
             break;
+          case ROLE_TYPES.EXPERT:
+            roleName = ROLE_TYPE_LABELS[ROLE_TYPES.EXPERT];
+            badgeVariant = "destructive";
+            break;
           default:
-            roleName = "Người dùng thường";
+            roleName = ROLE_TYPE_LABELS[ROLE_TYPES.USER];
             badgeVariant = "default";
         }
 
@@ -154,67 +154,39 @@ export default function AdminUsersPage() {
           "default";
 
         switch (user.status) {
-          case 1:
-            statusLabel = "Hoạt động";
+          case STATUSES.ACTIVE:
+            statusLabel = STATUS_LABELS[STATUSES.ACTIVE];
             statusVariant = "success";
             break;
-          case 2:
-            statusLabel = "Không hoạt động";
+          case STATUSES.INACTIVE:
+            statusLabel = STATUS_LABELS[STATUSES.INACTIVE];
             statusVariant = "secondary";
             break;
-          case 3:
-            statusLabel = "Đã chặn";
+          case STATUSES.BANNED:
+            statusLabel = STATUS_LABELS[STATUSES.BANNED];
+            statusVariant = "destructive";
+            break;
+          case STATUSES.PENDING:
+            statusLabel = STATUS_LABELS[STATUSES.PENDING];
             statusVariant = "destructive";
             break;
           default:
-            statusLabel = "Không xác định";
+            statusLabel = STATUS_LABELS[STATUSES.DELETED];
             statusVariant = "secondary";
         }
 
         return <Badge variant={statusVariant}>{statusLabel}</Badge>;
       },
     },
-    /* 
     {
-      key: "actions",
-      header: "Thao tác",
-      cell: (user: User) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Mở menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-            <DropdownMenuItem>
-              <Eye className="mr-2 h-4 w-4" />
-              <span>Xem chi tiết</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Edit className="mr-2 h-4 w-4" />
-              <span>Chỉnh sửa</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Mail className="mr-2 h-4 w-4" />
-              <span>Gửi email</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Lock className="mr-2 h-4 w-4" />
-              <span>Đổi mật khẩu</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
-              <Trash2 className="mr-2 h-4 w-4" />
-              <span>Xóa</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-      className: "text-right",
+      key: "createdAt",
+      header: "Ngày tạo",
+      cell: (user: User) => {
+        const date = new Date(user.createdAt);
+        return date.toLocaleDateString("vi-VN");
+      },
+      className: "w-[50px]",
     },
-    */
     {
       key: "actions",
       header: "Thao tác",
@@ -255,6 +227,10 @@ export default function AdminUsersPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Thao tác khác</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => handleSendEmail(user.id)}>
+                <Mail className="mr-2 h-4 w-4" />
+                <span>Duyệt</span>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleSendEmail(user.id)}>
                 <Mail className="mr-2 h-4 w-4" />
                 <span>Gửi email</span>
@@ -309,7 +285,7 @@ export default function AdminUsersPage() {
     toast({
       title: "Chức năng chưa hoàn thiện",
       description: "Chức năng đang trong quá trình phát triển",
-      variant: "info"
+      variant: "info",
     });
     // Hiển thị hộp thoại xác nhận trước khi xóa
     // Thực hiện xóa nếu người dùng xác nhận
@@ -319,7 +295,7 @@ export default function AdminUsersPage() {
     toast({
       title: "Thông báo",
       description: "Chức năng đang trong quá trình phát triển",
-      variant: "info"
+      variant: "info",
     });
     // Mở form gửi email
   };
@@ -328,7 +304,7 @@ export default function AdminUsersPage() {
     toast({
       title: "Thông báo",
       description: "Chức năng đang trong quá trình phát triển",
-      variant: "info"
+      variant: "info",
     });
     // Mở form đổi mật khẩu
   };

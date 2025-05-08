@@ -1,7 +1,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "./ui/button";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface PaginationProps {
   currentPage: number;
@@ -9,7 +10,10 @@ interface PaginationProps {
   totalItems?: number;
   pageSize?: number;
   siblingsCount?: number;
+  pageSizeOptions?: number[];
+  showPageSizeSelector?: boolean;
   onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   className?: string;
 }
 
@@ -19,7 +23,10 @@ export function Pagination({
   totalItems,
   pageSize = 12,
   siblingsCount = 1,
+  pageSizeOptions = [10, 20, 50, 100],
+  showPageSizeSelector = false,
   onPageChange,
+  onPageSizeChange,
   className = "",
 }: PaginationProps) {
   const router = useRouter();
@@ -27,34 +34,27 @@ export function Pagination({
 
   // Create array of pages to display
   const paginationRange = useMemo(() => {
-    // Minimum number of pages to display
     const totalPageNumbers = siblingsCount * 2 + 5;
 
-    // Case: few pages, display all
     if (totalPageNumbers >= totalPages) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
 
-    // Calculate left and right sibling indexes
     const leftSiblingIndex = Math.max(currentPage - siblingsCount, 1);
     const rightSiblingIndex = Math.min(currentPage + siblingsCount, totalPages);
 
-    // Don't show dots when there's only one number between siblings and boundary
     const shouldShowLeftDots = leftSiblingIndex > 2;
     const shouldShowRightDots = rightSiblingIndex < totalPages - 2;
 
-    // First and last page are always displayed
     const firstPageIndex = 1;
     const lastPageIndex = totalPages;
 
-    // Case: no left dots but right dots
     if (!shouldShowLeftDots && shouldShowRightDots) {
       const leftItemCount = 3 + 2 * siblingsCount;
       const leftRange = Array.from({ length: leftItemCount }, (_, i) => i + 1);
       return [...leftRange, "dots", lastPageIndex];
     }
 
-    // Case: no right dots but left dots
     if (shouldShowLeftDots && !shouldShowRightDots) {
       const rightItemCount = 3 + 2 * siblingsCount;
       const rightRange = Array.from(
@@ -64,7 +64,6 @@ export function Pagination({
       return [firstPageIndex, "dots", ...rightRange];
     }
 
-    // Case: both left and right dots
     if (shouldShowLeftDots && shouldShowRightDots) {
       const middleRange = Array.from(
         { length: rightSiblingIndex - leftSiblingIndex + 1 },
@@ -83,9 +82,21 @@ export function Pagination({
     if (onPageChange) {
       onPageChange(page);
     } else {
-      // If no callback, use URL params
       const params = new URLSearchParams(searchParams.toString());
       params.set("page", page.toString());
+      router.push(`?${params.toString()}`);
+    }
+  };
+
+  // Handle page size change
+  const handlePageSizeChange = (newSize: number) => {
+    if (onPageSizeChange) {
+      onPageSizeChange(newSize);
+    } else {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("pageSize", newSize.toString());
+      // Reset to first page when changing page size
+      params.set("page", "1");
       router.push(`?${params.toString()}`);
     }
   };
@@ -98,7 +109,7 @@ export function Pagination({
     const end = Math.min(currentPage * pageSize, totalItems);
 
     return (
-      <div className="text-sm text-gray-500">
+      <div className="text-sm text-gray-600">
         Hiển thị {start}-{end} của {totalItems} kết quả
       </div>
     );
@@ -112,57 +123,87 @@ export function Pagination({
     >
       {itemsInfo}
 
-      <nav className="flex items-center space-x-2">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          <span className="sr-only">Trang trước</span>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
+      <div className="flex items-center gap-4">
+      {showPageSizeSelector && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Số dòng </span>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(value) =>
+                handlePageSizeChange(parseInt(value, 10))
+              }
+            >
+              <SelectTrigger className="h-8 w-[70px] border-gray-300 focus:ring-2 focus:ring-green-600 focus:ring-offset-2">
+                <SelectValue placeholder={pageSize} />
+              </SelectTrigger>
+              <SelectContent>
+                {pageSizeOptions.map((size) => (
+                  <SelectItem key={size} value={size.toString()}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
-        {paginationRange.map((pageNumber, index) => {
-          if (pageNumber === "dots") {
+        <nav className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="h-10 w-10 rounded-md border-gray-300 text-gray-600 hover:bg-green-100 hover:text-green-700 hover:scale-105 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed disabled:scale-100 transition-all duration-200 focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+          >
+            <span className="sr-only">Trang trước</span>
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+
+          {paginationRange.map((pageNumber, index) => {
+            if (pageNumber === "dots") {
+              return (
+                <Button
+                  key={`dots-${index}`}
+                  variant="outline"
+                  size="icon"
+                  disabled
+                  className="h-10 w-10 rounded-md border-gray-300 text-gray-600 bg-white"
+                >
+                  <MoreHorizontal className="h-5 w-5" />
+                </Button>
+              );
+            }
+
+            const page = pageNumber as number;
             return (
               <Button
-                key={`dots-${index}`}
-                variant="outline"
-                size="icon"
-                disabled
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                size="sm"
+                className={
+                  currentPage === page
+                    ? "h-10 min-w-10 rounded-md bg-green-700 text-white hover:bg-green-800 hover:scale-105 focus:ring-2 focus:ring-green-600 focus:ring-offset-2 transition-all duration-200"
+                    : "h-10 min-w-10 rounded-md border-gray-300 text-gray-600 bg-white hover:bg-green-100 hover:text-green-700 hover:scale-105 focus:ring-2 focus:ring-green-600 focus:ring-offset-2 transition-all duration-200"
+                }
+                onClick={() => handlePageChange(page)}
               >
-                <MoreHorizontal className="h-4 w-4" />
+                {page}
               </Button>
             );
-          }
+          })}
 
-          const page = pageNumber as number;
-          return (
-            <Button
-              key={page}
-              variant="outline"
-              size="sm"
-              className={
-                currentPage === page ? "bg-primary text-primary-foreground" : ""
-              }
-              onClick={() => handlePageChange(page)}
-            >
-              {page}
-            </Button>
-          );
-        })}
-
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          <span className="sr-only">Trang sau</span>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </nav>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="h-10 w-10 rounded-md border-gray-300 text-gray-600 hover:bg-green-100 hover:text-green-700 hover:scale-105 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed disabled:scale-100 transition-all duration-200 focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+          >
+            <span className="sr-only">Trang sau</span>
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </nav>
+      </div>
     </div>
   );
 }

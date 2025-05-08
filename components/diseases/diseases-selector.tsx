@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import {
   Select,
@@ -11,76 +11,56 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { DiseasesResponse } from "@/app/types/diseases";
+import { debounce } from "lodash";
 
 // Định nghĩa interface cho props của DiseaseSelector
 interface DiseaseSelectorProps {
   value: string;
   onValueChange: (value: string) => void;
+  diseases: DiseasesResponse[];
+  isLoading: boolean;
 }
 
-export function DiseaseSelector({ value, onValueChange }: DiseaseSelectorProps) {
-  const [diseases, setDiseases] = useState<DiseasesResponse[]>([]);
-  const [filteredDiseases, setFilteredDiseases] = useState<DiseasesResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+export function DiseaseSelector({
+  value,
+  onValueChange,
+  diseases,
+  isLoading,
+}: DiseaseSelectorProps) {
+  const [filteredDiseases, setFilteredDiseases] = useState<DiseasesResponse[]>(
+    []
+  );
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
-  // Fetch dữ liệu diseases
-  const fetchDiseases = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Xây dựng query string
-      const queryParams = new URLSearchParams({
-        pageIndex: "1",
-        pageSize: "1000", // Lấy toàn bộ diseases
-      });
-
-      // Gọi API
-      const response = await fetch(
-        `/api/diseases/search?${queryParams.toString()}`
-      );
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Không thể tải dữ liệu");
-      }
-
-      if (result.success) {
-        const diseasesData = result.data.content;
-        setDiseases(diseasesData);
-        setFilteredDiseases(diseasesData);
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (error: any) {
-      console.error("Error fetching diseases:", error);
-      setError(error.message || "Đã xảy ra lỗi khi tải dữ liệu");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Xử lý tìm kiếm
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const keyword = e.target.value.toLowerCase();
-    setSearchKeyword(keyword);
-
-    if (keyword.trim() === "") {
-      setFilteredDiseases(diseases);
-    } else {
-      const filtered = diseases.filter((disease) =>
-        disease.name.toLowerCase().includes(keyword)
-      );
-      setFilteredDiseases(filtered);
-    }
-  };
-
-  // Fetch dữ liệu khi component mount
   useEffect(() => {
-    fetchDiseases();
-  }, []);
+    setFilteredDiseases(diseases);
+  }, [diseases]);
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const keyword = e.target.value;
+      setSearchKeyword(keyword);
+
+      debouncedSearch(keyword);
+    },
+    []
+  );
+
+  // Tách riêng hàm debounce để tránh tạo mới mỗi khi render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSearch = useCallback(
+    debounce((keyword: string) => {
+      if (keyword.trim() === "") {
+        setFilteredDiseases(diseases);
+      } else {
+        const filtered = diseases.filter((disease) =>
+          disease.name.toLowerCase().includes(keyword.toLowerCase())
+        );
+        setFilteredDiseases(filtered);
+      }
+    }, 300),
+    [diseases]
+  );
 
   return (
     <Select value={value} onValueChange={onValueChange}>
@@ -98,7 +78,7 @@ export function DiseaseSelector({ value, onValueChange }: DiseaseSelectorProps) 
               placeholder="Tìm kiếm nhóm bệnh..."
               className="pl-8 text-sm h-8"
               value={searchKeyword}
-              onChange={handleSearch}
+              onChange={handleSearchChange}
             />
           </div>
         </div>
@@ -106,16 +86,20 @@ export function DiseaseSelector({ value, onValueChange }: DiseaseSelectorProps) 
         <SelectItem value="all">Tất cả bệnh</SelectItem>
 
         {isLoading ? (
-          <div className="text-center py-2 text-sm text-gray-500">Đang tải...</div>
+          <div className="text-center py-2 text-sm text-gray-500">
+            Đang tải...
+          </div>
         ) : filteredDiseases.length > 0 ? (
           filteredDiseases.map((disease) => (
-            <SelectItem key={disease.id} value={disease.slug}>
+            <SelectItem key={disease.id} value={disease.id}>
               {disease.name}
             </SelectItem>
           ))
         ) : (
           <div className="text-center py-2 text-sm text-gray-500">
-            {searchKeyword ? "Không tìm thấy nhóm bệnh" : "Chưa có dữ liệu bệnh"}
+            {searchKeyword
+              ? "Không tìm thấy nhóm bệnh"
+              : "Chưa có dữ liệu bệnh"}
           </div>
         )}
       </SelectContent>
