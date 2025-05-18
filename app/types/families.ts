@@ -1,12 +1,11 @@
-export interface DiseasesResponse {
+export interface Family {
   id: number;
   name: string;
   slug: string;
   description?: string;
-  parentId?: number;
 }
 
-export interface DiseaseForm {
+export interface FamilyForm{
   name: string;
   description: string;
 }

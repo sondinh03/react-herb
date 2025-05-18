@@ -14,6 +14,7 @@ import {
   Leaf,
   FlaskRoundIcon as Flask,
   Map,
+  ImageIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -21,6 +22,14 @@ import { MediaViewer } from "@/components/media/media-viewer";
 import { Plant } from "@/app/types/plant";
 import { MediaCarousel, MediaItem } from "@/components/media/media-carousel";
 import { fetchApi } from "@/lib/api-client";
+import { HerbResponse } from "@/types/api";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function PlantDetailPage({
   params,
@@ -33,6 +42,11 @@ export default function PlantDetailPage({
   const [isPlantLoading, setIsPlantLoading] = useState(true);
   const [isMediaLoading, setIsMediaLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [relatedPlants, setRelatedPlants] = useState<Plant[]>([]);
+  const [isRelatedPlantsLoading, setIsRelatedPlantsLoading] = useState(true);
+  const [relatedPlantsError, setRelatedPlantsError] = useState<string | null>(
+    null
+  );
 
   // Fetch plant details
   const fetchPlantDetails = async () => {
@@ -124,6 +138,48 @@ export default function PlantDetailPage({
     }
   };
 
+  // Fetch related plants
+  const fetchRelatedPlants = async () => {
+    if (!plant?.familyId) {
+      setRelatedPlants([]);
+      setIsRelatedPlantsLoading(false);
+      return;
+    }
+
+    setIsRelatedPlantsLoading(true);
+    setRelatedPlantsError(null);
+
+    try {
+      const queryParams = new URLSearchParams({
+        pageIndex: "1",
+        pageSize: "4",
+        [`filters[familyId]`]: plant.familyId.toString(),
+        sortField: "views",
+        sortDirection: "desc",
+        // [`filters[id][ne]`]: plant.id.toString(),
+      });
+
+      const result = await fetchApi<HerbResponse<Plant[]>>(
+        `/api/plants/search?${queryParams}`
+      );
+
+      if (result.code == 200 || result.success) {
+        setRelatedPlants(result.data.content);
+      } else {
+        throw new Error(result.message || "Không thể tải cây liên quan");
+      }
+    } catch (error: any) {
+      setRelatedPlantsError(error.message || "Không thể tải cây liên quan");
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể tải cây liên quan",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRelatedPlantsLoading(false);
+    }
+  };
+
   const handleDeletePlant = async () => {
     if (!confirm("Bạn có chắc chắn muốn xóa cây dược liệu này?")) {
       return;
@@ -160,6 +216,7 @@ export default function PlantDetailPage({
   useEffect(() => {
     if (plant) {
       fetchMediaIds();
+      fetchRelatedPlants();
     }
   }, [plant, plantId]);
 
@@ -394,6 +451,91 @@ export default function PlantDetailPage({
               </div>
             </TabsContent>
           </Tabs>
+
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-6">
+              Một số cây dược liệu cùng họ
+            </h2>
+            {isRelatedPlantsLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <Card key={index} className="overflow-hidden animate-pulse">
+                    <div className="h-48 bg-gray-200"></div>
+                    <CardHeader className="pb-2">
+                      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                    </CardContent>
+                    <CardFooter>
+                      <div className="h-9 bg-gray-200 rounded w-full"></div>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            ) : relatedPlantsError ? (
+              <div className="text-center py-12 text-red-600">
+                {relatedPlantsError}
+              </div>
+            ) : relatedPlants.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {relatedPlants.map((relatedPlant) => (
+                  <Card key={relatedPlant.id} className="overflow-hidden">
+                    <div className="h-48 bg-green-50 relative overflow-hidden">
+                      {relatedPlant.featuredMediaId &&
+                      relatedPlant.featuredMediaId > 0 ? (
+                        <MediaViewer
+                          mediaId={relatedPlant.featuredMediaId}
+                          className="w-full h-full object-cover"
+                          width="100%"
+                          height="100%"
+                          alt={relatedPlant.name}
+                          showLoader={true}
+                          priority={false}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100">
+                          <ImageIcon className="h-8 w-8 text-gray-400" />
+                          <span className="mt-2 text-sm text-gray-500">
+                            Không có hình ảnh
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg">
+                        {relatedPlant.name}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <p className="text-sm text-gray-500">
+                        Họ: {relatedPlant.family || "Không có thông tin"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Bộ phận dùng:{" "}
+                        {relatedPlant.partsUsed || "Không có thông tin"}
+                      </p>
+                    </CardContent>
+                    <CardFooter>
+                      <Link
+                        href={`/plants/${relatedPlant.id}`}
+                        className="w-full"
+                      >
+                        <Button variant="outline" className="w-full">
+                          Xem chi tiết
+                        </Button>
+                      </Link>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                Không tìm thấy cây dược liệu nào cùng họ.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

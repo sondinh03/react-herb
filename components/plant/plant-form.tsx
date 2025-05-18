@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,6 +28,10 @@ import { linkMediaToPlant } from "@/services/plant-media-service";
 import { toast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { PlantMediaContainer } from "./plant-media-container";
+import { DiseasesResponse } from "@/app/types/diseases";
+import { fetchApi } from "@/lib/api-client";
+import { Page } from "@/types/api";
+import { DiseaseSelector } from "../diseases/diseases-selector";
 
 interface PlantFormProps {
   plant: Plant;
@@ -43,7 +47,31 @@ export default function PlantForm({
   mode,
 }: PlantFormProps) {
   const [formData, setFormData] = useState<Plant>(plant);
+  const [diseases, setDiseases] = useState<DiseasesResponse[]>([]);
+  const [isLoadingDiseases, setIsLoadingDiseases] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchDiseases = async () => {
+      setIsLoadingDiseases(true);
+      try {
+        const result = await fetchApi<Page<DiseasesResponse>>(
+          "/api/diseases/search"
+        );
+        setDiseases(result.data?.content || []);
+      } catch (error: any) {
+        toast({
+          title: "Lỗi",
+          description: error.message || "Không thể tải danh sách bệnh",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingDiseases(false);
+      }
+    };
+
+    fetchDiseases();
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -57,6 +85,11 @@ export default function PlantForm({
       setFormData({ ...formData, [field]: Number.parseInt(value) });
     } else if (field === "featured") {
       setFormData({ ...formData, [field]: value === "true" });
+    } else if (field === "diseaseId") {
+      setFormData({
+        ...formData,
+        [field]: value === "all" || !value ? undefined : Number.parseInt(value),
+      });
     } else {
       setFormData({ ...formData, [field]: value });
     }
@@ -237,24 +270,20 @@ export default function PlantForm({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="category">Danh mục</Label>
-                    <Select
-                      onValueChange={(value) =>
-                        handleSelectChange("category", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn danh mục" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="thao-duoc">Thảo dược</SelectItem>
-                        <SelectItem value="cay-thuoc">Cây thuốc</SelectItem>
-                        <SelectItem value="nam">Nấm dược liệu</SelectItem>
-                        <SelectItem value="hoa">Hoa dược liệu</SelectItem>
-                        <SelectItem value="re">Rễ dược liệu</SelectItem>
-                        <SelectItem value="qua">Quả dược liệu</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="diseaseId">Loại bệnh</Label>
+                    {isLoadingDiseases ? (
+                      <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                    ) : (
+                      <DiseaseSelector
+                        // value={formData.diseaseId?.toString() || "all"}
+                        value={formData.diseaseId || "all"}
+                        onValueChange={(value) =>
+                          handleSelectChange("diseaseId", value)
+                        }
+                        diseases={diseases}
+                        isLoading={isLoadingDiseases}
+                      />
+                    )}
                   </div>
 
                   <div className="space-y-2">
