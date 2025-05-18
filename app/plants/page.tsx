@@ -29,10 +29,6 @@ import { DiseasesResponse } from "../types/diseases";
 import { Plant } from "../types/plant";
 import { HerbResponse, Page, SearchParams } from "@/types/api";
 import { fetchApi } from "@/lib/api-client";
-import { log } from "console";
-import { debounce } from "lodash";
-import { buildQueryString } from "@/lib/api-utils";
-import { plantService } from "@/services/plantService";
 
 // Định nghĩa các interface
 interface Tag {

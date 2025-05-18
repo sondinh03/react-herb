@@ -1,8 +1,10 @@
 export interface Plant {
-  id?: number;
+  id: number;
   name: string;
   scientificName: string;
   family: string;
+  familyId?: number;
+  generaId?: number;
   genus: string;
   otherNames: string;
   partsUsed: string;
@@ -30,6 +32,7 @@ export interface Plant {
   views: number;
   images?: string[]; // Thêm trường images để quản lý hình ảnh
   category?: string; // Thêm trường category
+  diseaseId?: number;
 }
 
 // Enum cho Status

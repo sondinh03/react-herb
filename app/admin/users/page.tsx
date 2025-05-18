@@ -51,6 +51,7 @@ import {
   STATUSES,
 } from "@/constant/user";
 import { User } from "@/app/types/user";
+import { fetchApi } from "@/lib/api-client";
 
 export default function AdminUsersPage() {
   const router = useRouter();

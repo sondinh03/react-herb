@@ -198,6 +198,10 @@ export async function callApi(
     // Build API URL
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
     const fullUrl = `${apiUrl}${endpoint}`;
+
+    // Ghi log chi tiết yêu cầu
+    console.log("endpint: ",  endpoint);
+
     const headers: HeadersInit = {
       "Content-Type": "application/json",
     };
