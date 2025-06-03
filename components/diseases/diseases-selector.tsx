@@ -83,7 +83,7 @@ export function DiseaseSelector({
           </div>
         </div>
 
-        <SelectItem value="all">Tất cả bệnh</SelectItem>
+        <SelectItem value="all">Tất cả công dụng</SelectItem>
 
         {isLoading ? (
           <div className="text-center py-2 text-sm text-gray-500">

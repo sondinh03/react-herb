@@ -17,6 +17,8 @@ import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { Plant } from "@/app/types/plant";
+import { getStatusLabel } from "@/constant/plant";
+import { Spinner } from "@/components/spinner";
 /*
 interface Plant {
   id: number;
@@ -106,30 +108,23 @@ export default function PlantDetailPage() {
     });
   };
 
-  const getStatusLabel = (
-    status: number
-  ): { label: string; variant: string } => {
-    switch (status) {
-      case 0:
-        return { label: "Bản nháp", variant: "warning" };
-      case 1:
-        return { label: "Đã xuất bản", variant: "success" };
-      case 2:
-        return { label: "Chờ duyệt", variant: "secondary" };
-      default:
-        return { label: "Không xác định", variant: "default" };
-    }
-  };
+  // const getStatusLabel = (
+  //   status: number
+  // ): { label: string; variant: string } => {
+  //   switch (status) {
+  //     case 0:
+  //       return { label: "Bản nháp", variant: "warning" };
+  //     case 1:
+  //       return { label: "Đã xuất bản", variant: "success" };
+  //     case 2:
+  //       return { label: "Chờ duyệt", variant: "secondary" };
+  //     default:
+  //       return { label: "Không xác định", variant: "default" };
+  //   }
+  // };
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto py-8 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-current border-r-transparent"></div>
-          <p className="mt-4">Đang tải thông tin cây dược liệu...</p>
-        </div>
-      </div>
-    );
+    return <Spinner></Spinner>;
   }
 
   if (error || !plant) {

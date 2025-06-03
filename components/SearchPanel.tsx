@@ -45,7 +45,7 @@ export function SearchPanel({
             onClick={onSearch}
           >
             <Filter className="h-4 w-4" />
-            Filter
+            Bộ lọc
           </Button>
           {showExport && (
             <Button

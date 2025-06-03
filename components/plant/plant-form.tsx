@@ -32,6 +32,7 @@ import { DiseasesResponse } from "@/app/types/diseases";
 import { fetchApi } from "@/lib/api-client";
 import { Page } from "@/types/api";
 import { DiseaseSelector } from "../diseases/diseases-selector";
+import { PLANT_STATUS_OPTIONS } from "@/constant/plant";
 
 interface PlantFormProps {
   plant: Plant;
@@ -99,11 +100,11 @@ export default function PlantForm({
     setFormData({ ...formData, images: mediaIds.map((id) => id.toString()) });
   };
 
-  const handleSaveDraft = async () => {
-    await onSubmit({ ...formData, status: PlantStatus.DRAFT }, false);
-  };
+  // const handleSaveDraft = async () => {
+  //   await onSubmit({ ...formData, status: PlantStatus.DRAFT }, false);
+  // };
 
-  const handleSaveAndPublish = async () => {
+  const handleSave = async () => {
     const result = await onSubmit(
       { ...formData, status: PlantStatus.PUBLISHED },
       true
@@ -138,26 +139,26 @@ export default function PlantForm({
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 px-4 sm:px-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{pageTitle}</h1>
           <p className="mt-1 text-sm text-gray-500">{pageDescription}</p>
         </div>
         <div className="mt-4 sm:mt-0 flex gap-2">
-          <Button
+          {/* <Button
             variant="outline"
             onClick={handleSaveDraft}
             disabled={isLoading}
           >
             {isLoading ? "Đang lưu..." : "Lưu nháp"}
-          </Button>
+          </Button> */}
           <Button
-            className="flex items-center gap-1"
-            onClick={handleSaveAndPublish}
+            className="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white transition-all hover:shadow-sm animate-fade-in"
+            onClick={handleSave}
             disabled={isLoading}
           >
             <Save className="h-4 w-4" />
-            {isLoading ? "Đang lưu..." : "Lưu và xuất bản"}
+            {isLoading ? "Đang lưu..." : "Lưu"}
           </Button>
         </div>
       </div>
@@ -270,7 +271,7 @@ export default function PlantForm({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="diseaseId">Loại bệnh</Label>
+                    <Label htmlFor="diseaseId">Công dụng chữa bệnh</Label>
                     {isLoadingDiseases ? (
                       <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
                     ) : (
@@ -286,6 +287,7 @@ export default function PlantForm({
                     )}
                   </div>
 
+                  {/** 
                   <div className="space-y-2">
                     <Label htmlFor="status">Trạng thái</Label>
                     <Select
@@ -310,7 +312,39 @@ export default function PlantForm({
                       </SelectContent>
                     </Select>
                   </div>
+                  */}
 
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="status"
+                      className="text-sm font-semibold text-gray-700"
+                    >
+                      Trạng thái
+                    </Label>
+                    <Select
+                      value={formData.status.toString()}
+                      onValueChange={(value) =>
+                        handleSelectChange("status", value)
+                      }
+                    >
+                      <SelectTrigger className="border-green-500 focus:ring-2 focus:ring-green-500">
+                        <SelectValue placeholder="Chọn trạng thái" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border-green-500">
+                        {PLANT_STATUS_OPTIONS.map((option) => (
+                          <SelectItem
+                            key={option.value}
+                            value={option.value.toString()}
+                            className="hover:bg-green-50 focus:bg-green-50"
+                          >
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/** 
                   <div className="space-y-2">
                     <Label htmlFor="distribution">Vùng phân bố</Label>
                     <Input
@@ -340,6 +374,7 @@ export default function PlantForm({
                       onChange={handleInputChange}
                     />
                   </div>
+                  */}
                 </CardContent>
               </Card>
             </div>

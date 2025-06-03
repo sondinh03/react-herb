@@ -35,6 +35,9 @@ import {
   Eye,
   Download,
   Plus,
+  Archive,
+  X,
+  Check,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useDataSearch } from "@/hooks/useDataSearch";
@@ -43,6 +46,8 @@ import { DataTable } from "@/components/DataTable";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PLANT_STATUS_OPTIONS } from "@/constant/plant";
+import { handleWait } from "@/components/header";
 
 interface Plant {
   id: number;
@@ -85,6 +90,11 @@ export default function AdminPlantsPage() {
     handleFilterChange("status", value !== "all" ? value : "");
   };
 
+  const handleSelectionChange = (selected: Plant[]) => {
+    setSelectedPlants(selected);
+    console.log("Selected plants:", selected);
+  };
+
   // Define table columns
   const columns = [
     {
@@ -96,9 +106,7 @@ export default function AdminPlantsPage() {
     {
       key: "name",
       header: "Tên cây",
-      cell: (plant: Plant) => (
-        <span className="font-medium">{plant.name}</span>
-      ),
+      cell: (plant: Plant) => <span className="font-medium">{plant.name}</span>,
     },
     {
       key: "scientificName",
@@ -121,25 +129,42 @@ export default function AdminPlantsPage() {
       key: "status",
       header: "Trạng thái",
       cell: (plant: Plant) => {
-        let statusLabel = "";
-        let statusVariant: "default" | "secondary" | "success" | "warning" = "default";
+        let statusLabel = "Không xác định";
+        let statusVariant:
+          | "default"
+          | "secondary"
+          | "success"
+          | "destructive"
+          | "warning" = "default";
 
-        switch (plant.status) {
-          case 1:
-            statusLabel = "Bản nháp";
-            statusVariant = "warning";
-            break;
-          case 2:
-            statusLabel = "Đã xuất bản";
-            statusVariant = "success";
-            break;
-          case 3:
-            statusLabel = "Bản lưu trữ";
-            statusVariant = "secondary";
-            break;
-          default:
-            statusLabel = "Không xác định";
-            statusVariant = "default";
+        // Tìm thông tin trạng thái từ PLANT_STATUS_OPTIONS
+        const statusInfo = PLANT_STATUS_OPTIONS.find(
+          (status) => status.value === plant.status
+        );
+
+        if (statusInfo) {
+          statusLabel = statusInfo.label;
+
+          // Xác định variant dựa trên loại trạng thái
+          switch (statusInfo.value) {
+            case 1: // Bản nháp
+              statusVariant = "warning";
+              break;
+            case 2: // Chờ duyệt
+              statusVariant = "secondary";
+              break;
+            case 3: // Đã xuất bản
+              statusVariant = "success";
+              break;
+            case 4: // Lưu trữ
+              statusVariant = "secondary";
+              break;
+            case 5: // Từ chối
+              statusVariant = "destructive";
+              break;
+            default:
+              statusVariant = "default";
+          }
         }
 
         return <Badge variant={statusVariant}>{statusLabel}</Badge>;
@@ -172,6 +197,7 @@ export default function AdminPlantsPage() {
             size="sm"
             className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
             onClick={() => handleViewPlant(plant.id)}
+            title="Xem chi tiết"
           >
             <Eye className="h-4 w-4" />
             <span className="sr-only">Xem</span>
@@ -182,10 +208,74 @@ export default function AdminPlantsPage() {
             size="sm"
             className="h-8 w-8 p-0 text-amber-600 hover:text-amber-800 hover:bg-amber-50"
             onClick={() => handleEditPlant(plant.id)}
+            title="Chỉnh sửa"
           >
             <Edit className="h-4 w-4" />
             <span className="sr-only">Sửa</span>
           </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`h-8 w-8 p-0 ${
+              plant.status === 2
+                ? "text-green-600 hover:text-green-800 hover:bg-green-50 cursor-pointer"
+                : "text-gray-300 cursor-not-allowed"
+            }`}
+            onClick={
+              plant.status === 2
+                ? () => handleApprovePlant(plant.id)
+                : undefined
+            }
+            disabled={plant.status !== 2}
+            title={
+              plant.status === 2
+                ? "Duyệt bài viết"
+                : "Chỉ có thể duyệt bài viết đang chờ duyệt"
+            }
+          >
+            <Check className="h-4 w-4" />
+            <span className="sr-only">Duyệt</span>
+          </Button>
+
+          {/* Reject Action - Always show, disable when not pending */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`h-8 w-8 p-0 ${
+              plant.status === 2
+                ? "text-red-600 hover:text-red-800 hover:bg-red-50 cursor-pointer"
+                : "text-gray-300 cursor-not-allowed"
+            }`}
+            onClick={
+              // plant.status === 2 ? () => handleRejectPlant(plant.id) : undefined
+              () => handleWait()
+            }
+            disabled={plant.status !== 2}
+            title={
+              plant.status === 2
+                ? "Từ chối bài viết"
+                : "Chỉ có thể từ chối bài viết đang chờ duyệt"
+            }
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Từ chối</span>
+          </Button>
+
+          {/* Archive Action - Show only for published status */}
+          {plant.status === 3 && ( // Đã xuất bản
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+              // onClick={() => handleArchivePlant(plant.id)}
+              onClick={() => handleWait()}
+              title="Lưu trữ"
+            >
+              <Archive className="h-4 w-4" />
+              <span className="sr-only">Lưu trữ</span>
+            </Button>
+          )}
 
           {/* Dropdown for additional actions */}
           <DropdownMenu>
@@ -230,9 +320,11 @@ export default function AdminPlantsPage() {
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="all">Tất cả trạng thái</SelectItem>
-        <SelectItem value="1">Đã duyệt</SelectItem>
-        <SelectItem value="2">Chờ duyệt</SelectItem>
-        <SelectItem value="3">Bản nháp</SelectItem>
+        {PLANT_STATUS_OPTIONS.map((status) => (
+          <SelectItem key={status.value} value={status.value.toString()}>
+            {status.label}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
@@ -253,7 +345,7 @@ export default function AdminPlantsPage() {
     toast({
       title: "Chức năng chưa hoàn thiện",
       description: "Chức năng xóa đang trong quá trình phát triển",
-      variant: "info"
+      variant: "info",
     });
     // Show confirmation dialog before deletion
     // Perform deletion if confirmed
@@ -263,7 +355,7 @@ export default function AdminPlantsPage() {
     toast({
       title: "Thông báo",
       description: "Chức năng duyệt đang trong quá trình phát triển",
-      variant: "info"
+      variant: "info",
     });
     // Implement plant approval logic
   };
@@ -298,10 +390,13 @@ export default function AdminPlantsPage() {
         onSearch={handleSearch}
         filterComponents={filterComponents}
         showExport={true}
+        onExport={handleWait}
         placeholder="Tìm kiếm cây dược liệu..."
       />
 
       <DataTable
+        selectable={true}
+        onSelectionChange={handleSelectionChange}
         data={plants}
         columns={columns}
         isLoading={isLoading}

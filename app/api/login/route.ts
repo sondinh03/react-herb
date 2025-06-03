@@ -4,7 +4,7 @@ import { AUTH_ERRORS } from "./error-messages";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     const fullUrl = `${apiUrl}/api/auth/login`;
 
     try {
@@ -16,6 +16,8 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify(body),
       });
 
+      console.log('Response from backend:', response);
+
       if (!response.ok) {
         console.log("HTTP Error Status:", response.status); // Log mã lỗi
 
@@ -23,7 +25,7 @@ export async function POST(request: NextRequest) {
         const errorMapping = {
           400: AUTH_ERRORS.BAD_REQUEST, // Thiếu/sai tham số
           401: AUTH_ERRORS.INVALID_CREDENTIALS, // Sai thông tin đăng nhập
-          403: AUTH_ERRORS.ACCOUNT_LOCKED, // Tài khoản bị khóa
+          403: AUTH_ERRORS.FORBIDDEN, // Tài khoản bị khóa
           404: AUTH_ERRORS.NOT_FOUND, // API không tồn tại
           500: AUTH_ERRORS.SYSTEM_ERROR, // Lỗi server
         };
@@ -48,8 +50,8 @@ export async function POST(request: NextRequest) {
     } catch (fetchError: any) {
       console.error("Fetch error:", fetchError);
 
-      return NextResponse.json(AUTH_ERRORS.NETWORK_ERROR, {
-        status: AUTH_ERRORS.NETWORK_ERROR.code,
+      return NextResponse.json(AUTH_ERRORS.BAD_REQUEST, {
+        status: AUTH_ERRORS.BAD_REQUEST.code,
       });
     }
   } catch (error: any) {
