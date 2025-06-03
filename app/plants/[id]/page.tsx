@@ -30,6 +30,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Spinner } from "@/components/spinner";
 
 export default function PlantDetailPage({
   params,
@@ -221,13 +222,7 @@ export default function PlantDetailPage({
   }, [plant, plantId]);
 
   if (isPlantLoading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex justify-center">
-        <div className="text-center py-12">
-          Đang tải thông tin cây dược liệu...
-        </div>
-      </div>
-    );
+    return <Spinner></Spinner>;
   }
 
   // Error state
@@ -264,10 +259,8 @@ export default function PlantDetailPage({
         <div className="p-6 md:p-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                {plant.name} ({plant.scientificName})
-              </h1>
-              <p className="mt-2 text-gray-600">{plant.family}</p>
+              <h1 className="text-3xl font-bold text-gray-900">{plant.name}</h1>
+              <p className="mt-2 text-gray-600">{plant.scientificName}</p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="icon">
@@ -314,43 +307,26 @@ export default function PlantDetailPage({
                     Thông tin chung
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <p>
-                        <span className="font-medium">Tên khoa học:</span>{" "}
-                        {plant.scientificName}
-                      </p>
-                      <p>
-                        <span className="font-medium">Họ:</span> {plant.family}
-                      </p>
-                      <p>
-                        <span className="font-medium">Chi:</span> {plant.genus}
-                      </p>
-                      <p>
-                        <span className="font-medium">Tên khác:</span>{" "}
-                        {plant.otherNames}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <p>
-                        <span className="font-medium">Bộ phận dùng:</span>{" "}
-                        {plant.partsUsed}
-                      </p>
-                      <p>
-                        <span className="font-medium">Vùng phân bố:</span>{" "}
-                        {plant.distribution}
-                      </p>
-                      <p>
-                        <span className="font-medium">Độ cao:</span>{" "}
-                        {plant.altitude}
-                      </p>
-                      <p>
-                        <span className="font-medium">Mùa thu hoạch:</span>{" "}
-                        {plant.harvestSeason}
-                      </p>
-                    </div>
+                    <p>
+                      <span className="font-medium">Tên Tiếng Việt:</span>{" "}
+                      {plant.name}
+                    </p>
+                    <p>
+                      <span className="font-medium">Tên khoa học:</span>{" "}
+                      {plant.scientificName}
+                    </p>
+                    <p>
+                      <span className="font-medium">Họ:</span> {plant.family}
+                    </p>
+                    <p>
+                      <span className="font-medium">Chi:</span> {plant.genus}
+                    </p>
+                    <p>
+                      <span className="font-medium">Tên khác:</span>{" "}
+                      {plant.otherNames}
+                    </p>
                   </div>
                 </div>
-
                 <div>
                   <h2 className="text-xl font-semibold mb-2 flex items-center">
                     <Leaf className="h-5 w-5 mr-2 text-green-600" />
@@ -374,6 +350,9 @@ export default function PlantDetailPage({
                   <p className="text-gray-700">
                     <strong>Rễ:</strong> {plant.roots}
                   </p>
+                  <p className="text-gray-700">
+                    <strong>Bộ phận dùng:</strong> {plant.partsUsed}
+                  </p>
                 </div>
 
                 <div>
@@ -390,6 +369,18 @@ export default function PlantDetailPage({
                     Phân bố và sinh thái
                   </h2>
                   <p className="text-gray-700">{plant.ecology}</p>
+                  <p>
+                    <span className="font-medium">Vùng phân bố:</span>{" "}
+                    {plant.distribution}
+                  </p>
+                  <p>
+                    <span className="font-medium">Độ cao:</span>{" "}
+                    {plant.altitude}
+                  </p>
+                  <p>
+                    <span className="font-medium">Mùa thu hoạch:</span>{" "}
+                    {plant.harvestSeason}
+                  </p>
                 </div>
               </div>
             </div>
@@ -452,6 +443,16 @@ export default function PlantDetailPage({
             </TabsContent>
           </Tabs>
 
+          <div className="relative flex items-center justify-center my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full h-px bg-gradient-to-r from-transparent via-green-500 to-transparent"></div>
+            </div>
+            <div className="relative bg-white px-4">
+              <div className="flex items-center justify-center w-8 h-8 bg-green-500 rounded-full">
+                <Leaf className="w-4 h-4 text-white" />
+              </div>
+            </div>
+          </div>
           <div className="mt-12">
             <h2 className="text-2xl font-bold mb-6">
               Một số cây dược liệu cùng họ

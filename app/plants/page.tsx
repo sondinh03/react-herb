@@ -24,11 +24,11 @@ import { toast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Pagination } from "@/components/pagination";
 import { MediaViewer } from "@/components/media/media-viewer";
-import { DiseaseSelector } from "@/components/diseases/diseases-selector";
-import { DiseasesResponse } from "../types/diseases";
-import { Plant } from "../types/plant";
-import { HerbResponse, Page, SearchParams } from "@/types/api";
 import { fetchApi } from "@/lib/api-client";
+import { GenericSelector } from "@/components/GenericSelector";
+import { Page, SearchParams } from "@/types/api";
+import { Plant } from "../types/plant";
+import { DiseasesResponse } from "../types/diseases";
 
 // Định nghĩa các interface
 interface Tag {
@@ -82,14 +82,6 @@ export default function PlantsPage() {
   const [viewType, setViewType] = useState<"grid" | "list">("grid");
   const [diseases, setDiseases] = useState<DiseasesResponse[]>([]);
   const [isLoadingDiseases, setIsLoadingDiseases] = useState(false);
-  // const [debouncedKeyword, setDebouncedKeyword] = useState(searchState.keyword);
-
-  const statuses = [
-    { value: "all", label: "Tất cả trạng thái" },
-    { value: "1", label: "Bản nháp" },
-    { value: "2", label: "Chờ duyệt" },
-    { value: "3", label: "Đã xuất bản" },
-  ];
 
   const fetchPlants = async () => {
     setIsLoading(true);
@@ -171,13 +163,12 @@ export default function PlantsPage() {
     }));
   }, []);
 
-  // Handle disease change
-  const handleDiseaseChange = useCallback((value: string) => {
+  const handleDiseaseChange = useCallback((value: string | number) => {
     setSearchState((prev) => ({
       ...prev,
       filters: {
         ...prev.filters,
-        diseaseId: value === "all" ? undefined : Number(value),
+        diseaseId: value === "all" ? "all" : value, // Giữ nguyên kiểu dữ liệu của value
       },
       pageIndex: 1,
     }));
@@ -327,7 +318,7 @@ export default function PlantsPage() {
             <div className="relative">
               <Input
                 type="text"
-                placeholder="Tìm kiếm cây dược liệu..."
+                placeholder="Tìm kiếm cây dược liệu theo tên, hoạt chất, công dụng..."
                 className="pr-16"
                 value={searchState.keyword}
                 onChange={handleKeywordChange}
@@ -357,11 +348,17 @@ export default function PlantsPage() {
             {isLoadingDiseases ? (
               <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
             ) : (
-              <DiseaseSelector
+              <GenericSelector
                 value={searchState.filters.diseaseId || "all"}
                 onValueChange={handleDiseaseChange}
-                diseases={diseases}
+                items={diseases}
                 isLoading={isLoadingDiseases}
+                isSearching={false}
+                searchPlaceholder="Tìm kiếm công dụng..."
+                allOption={{ value: "all", label: "Tất cả công dụng" }}
+                noResultsText="Không tìm thấy công dụng"
+                noDataText="Chưa có dữ liệu công dụng bệnh"
+                loadingText="Đang tải danh sách công dụng..."
               />
             )}
           </div>
@@ -443,7 +440,8 @@ export default function PlantsPage() {
                         Họ: {plant.family || "Không có thông tin"}
                       </p>
                       <p className="text-sm text-gray-500">
-                        Bộ phận dùng: {plant.partsUsed || "Không có thông tin"}
+                        Tên khoa học:{" "}
+                        {plant.scientificName || "Không có thông tin"}
                       </p>
                     </CardContent>
                     <CardFooter>
@@ -546,6 +544,10 @@ export default function PlantsPage() {
                         <h3 className="text-lg font-semibold mb-2">
                           {plant.name}
                         </h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Tên khoa học:{" "}
+                          {plant.scientificName || "Không có thông tin"}
+                        </p>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
                           <p className="text-sm text-gray-500">
                             Họ: {plant.family || "Không có thông tin"}
@@ -562,9 +564,6 @@ export default function PlantsPage() {
                             {plant.distribution || "Không có thông tin"}
                           </p>
                         </div>
-                        <p className="text-sm text-gray-600 mb-4">
-                          {plant.scientificName || "Không có thông tin"}
-                        </p>
                         <div className="flex justify-end">
                           <Link href={`/plants/${plant.id}`}>
                             <Button variant="outline">Xem chi tiết</Button>
