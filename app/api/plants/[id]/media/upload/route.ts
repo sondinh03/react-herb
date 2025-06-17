@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Forward the request to the backend
-    const response = await fetch(`${apiUrl}/api/media/upload`, {
+    const response = await fetch(`${apiUrl}/api/plants/${plantId}/media/upload`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

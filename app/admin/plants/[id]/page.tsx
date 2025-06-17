@@ -19,6 +19,7 @@ import { toast } from "@/hooks/use-toast";
 import { Plant } from "@/app/types/plant";
 import { getStatusLabel } from "@/constant/plant";
 import { Spinner } from "@/components/spinner";
+import { BackButton } from "@/components/BackButton";
 /*
 interface Plant {
   id: number;
@@ -130,11 +131,7 @@ export default function PlantDetailPage() {
   if (error || !plant) {
     return (
       <div className="container mx-auto py-8">
-        <Link href="/admin/plants">
-          <Button variant="outline" size="sm" className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Quay lại danh sách
-          </Button>
-        </Link>
+        <BackButton href="/admin/plants"></BackButton>
         <Card>
           <CardContent className="py-10">
             <div className="text-center">
@@ -157,13 +154,9 @@ export default function PlantDetailPage() {
   const statusInfo = getStatusLabel(plant.status);
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-6">
-        <Link href="/admin/plants">
-          <Button variant="outline" size="sm" className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Quay lại danh sách
-          </Button>
-        </Link>
+        <BackButton href="/admin/plants"></BackButton>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold">{plant.name}</h1>

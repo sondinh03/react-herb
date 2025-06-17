@@ -23,9 +23,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Save } from "lucide-react";
 import { type Plant, PlantStatus } from "@/app/types/plant";
-import { PlantMediaTab } from "./plant-media-tab";
 import { linkMediaToPlant } from "@/services/plant-media-service";
-import { toast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { PlantMediaContainer } from "./plant-media-container";
 import { DiseasesResponse } from "@/app/types/diseases";
@@ -33,6 +31,7 @@ import { fetchApi } from "@/lib/api-client";
 import { Page } from "@/types/api";
 import { DiseaseSelector } from "../diseases/diseases-selector";
 import { PLANT_STATUS_OPTIONS } from "@/constant/plant";
+import { toast } from "@/hooks/use-toast";
 
 interface PlantFormProps {
   plant: Plant;
@@ -286,34 +285,6 @@ export default function PlantForm({
                       />
                     )}
                   </div>
-
-                  {/** 
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Trạng thái</Label>
-                    <Select
-                      value={formData.status.toString()}
-                      onValueChange={(value) =>
-                        handleSelectChange("status", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn trạng thái" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={PlantStatus.PUBLISHED.toString()}>
-                          Xuất bản
-                        </SelectItem>
-                        <SelectItem value={PlantStatus.DRAFT.toString()}>
-                          Bản nháp
-                        </SelectItem>
-                        <SelectItem value={PlantStatus.PENDING.toString()}>
-                          Chờ duyệt
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  */}
-
                   <div className="space-y-2">
                     <Label
                       htmlFor="status"
@@ -343,38 +314,6 @@ export default function PlantForm({
                       </SelectContent>
                     </Select>
                   </div>
-
-                  {/** 
-                  <div className="space-y-2">
-                    <Label htmlFor="distribution">Vùng phân bố</Label>
-                    <Input
-                      id="distribution"
-                      placeholder="Nhập vùng phân bố"
-                      value={formData.distribution}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="altitude">Độ cao</Label>
-                    <Input
-                      id="altitude"
-                      placeholder="Nhập độ cao (m)"
-                      value={formData.altitude}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="harvestSeason">Mùa thu hoạch</Label>
-                    <Input
-                      id="harvestSeason"
-                      placeholder="Nhập mùa thu hoạch"
-                      value={formData.harvestSeason}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  */}
                 </CardContent>
               </Card>
             </div>
@@ -567,14 +506,6 @@ export default function PlantForm({
         </TabsContent>
 
         <TabsContent value="media">
-          {/* 
-          <PlantMediaTab
-            mediaIds={formData.images?.map((id) => Number.parseInt(id)) || []}
-            onMediaChange={handleMediaChange}
-            plantId={mode === "edit" ? Number.parseInt(formData.id as string) : undefined}
-            isLoading={isLoading}
-          />
-*/}
           <PlantMediaContainer plantId={formData.id} />
         </TabsContent>
       </Tabs>

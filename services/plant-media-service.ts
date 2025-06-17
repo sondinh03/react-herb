@@ -25,7 +25,7 @@ export async function linkMediaToPlant(
 
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(errorData.message || "Lỗi khi liên kết media với plant")
+      throw new Error(errorData.message || "Lỗi khi liên kết media với plant") //lỗi
     }
 
     return await response.json()

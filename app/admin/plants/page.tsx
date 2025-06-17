@@ -45,7 +45,6 @@ import { SearchPanel } from "@/components/SearchPanel";
 import { DataTable } from "@/components/DataTable";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
 import { PLANT_STATUS_OPTIONS } from "@/constant/plant";
 import { handleWait } from "@/components/header";
 
@@ -96,7 +95,7 @@ export default function AdminPlantsPage() {
   };
 
   // Define table columns
-  const columns = [
+  const columns = [ 
     {
       key: "id",
       header: "ID",

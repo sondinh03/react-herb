@@ -564,7 +564,7 @@ export default function AdminLayout({
                   <span className="sr-only">Xem thông báo</span>
                   <Bell className="h-6 w-6" />
                 </button>
-                <div className Vindictive="ml-4 relative">
+                <div className="ml-4 relative">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button

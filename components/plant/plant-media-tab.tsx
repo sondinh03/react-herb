@@ -62,6 +62,7 @@ export function PlantMediaTab({
   >([]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Lấy danh sách file từ e.target.file
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -95,7 +96,7 @@ export function PlantMediaTab({
               plantId // Truyền plantId vào đây
             );
 
-            if (response.success && response.data) {
+            if (response.code == 200 && response.data) {
               newMediaIds.push(response.data.id);
               successCount.count++;
             } else {
@@ -114,8 +115,12 @@ export function PlantMediaTab({
       clearInterval(interval);
       setUploadProgress(100);
 
+      console.log("Đã bắt đầu gọi onMediaChange")
+      alert("Đã bắt đầu gọi onMediaChange");
+      
       // Cập nhật danh sách media IDs
       onMediaChange(newMediaIds);
+      console.log("Đã gọi onMediaChange")
 
       // Reset input sau khi upload thành công
       if (fileInputRef.current) {
@@ -125,7 +130,7 @@ export function PlantMediaTab({
       // Hiển thị thông báo kết quả
       if (successCount.count > 0) {
         toast({
-          title: "Upload thành công",
+          title: "Tải lên thành công",
           description: `Đã tải lên ${successCount.count} hình ảnh thành công${
             errorCount.count > 0 ? `, ${errorCount.count} lỗi` : ""
           }`,
@@ -261,14 +266,14 @@ export function PlantMediaTab({
       const { id, index } = mediaToDelete;
       const response = await deleteMedia(id);
 
-      if (response.success) {
+      if (response.success || response.code == 200) {
         handleRemoveMedia(index);
         toast({
           title: "Xóa thành công",
-          description: "Đã xóa media thành công",
+          description: "Đã xóa hình ảnh thành công",
         });
       } else {
-        throw new Error(response.message || "Không thể xóa media");
+        throw new Error(response.message || "Không thể xóa hình ảnh");
       }
     } catch (error: any) {
       console.error("Error deleting media:", error);
@@ -310,7 +315,6 @@ export function PlantMediaTab({
     );
   };
 
-  // Phần JSX giữ nguyên
   return (
     <>
       <Card>
@@ -391,6 +395,10 @@ export function PlantMediaTab({
                       mediaId={mediaId}
                       className="w-full h-full object-cover"
                       alt={`Ảnh ${index + 1}`}
+                      width="100%"
+                      height="100%"
+                      showLoader={true}
+                      priority={false}
                     />
                   </div>
                   <button
@@ -542,4 +550,3 @@ export function PlantMediaTab({
     </>
   );
 }
-

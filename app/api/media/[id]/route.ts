@@ -120,7 +120,7 @@ export async function DELETE(
       );
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
     // Forward the request to the backend
     const response = await fetch(`${apiUrl}/api/media/${id}`, {

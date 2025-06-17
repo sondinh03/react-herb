@@ -3,10 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { PlantMediaTab } from "./plant-media-tab";
-import {
-  getPlantMedia,
-  linkMediaToPlant,
-} from "@/services/plant-media-service";
+import { linkMediaToPlant } from "@/services/plant-media-service";
 
 interface PlantMediaContainerProps {
   plantId: number;
@@ -80,40 +77,7 @@ export function PlantMediaContainer({ plantId }: PlantMediaContainerProps) {
   const handleMediaChange = useCallback(
     async (updatedMediaIds: number[]) => {
       setMediaIds(updatedMediaIds);
-
-      // Cập nhật thay đổi lên server nếu có plantId
-      if (plantId) {
-        try {
-          setIsSaving(true);
-          const result = await linkMediaToPlant(plantId, updatedMediaIds);
-
-          if (!result.success) {
-            toast({
-              title: "Lỗi cập nhật",
-              description:
-                result.message || "Không thể cập nhật danh sách hình ảnh",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Thành công",
-              description: "Đã cập nhật danh sách hình ảnh",
-            });
-          }
-        } catch (error: any) {
-          console.error("Lỗi khi cập nhật danh sách hình ảnh:", error);
-          toast({
-            title: "Lỗi cập nhật",
-            description:
-              error.message || "Không thể cập nhật danh sách hình ảnh",
-            variant: "destructive",
-          });
-        } finally {
-          setIsSaving(false);
-        }
-      }
-    },
-    [plantId]
+    }, []
   );
 
   return (

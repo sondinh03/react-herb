@@ -31,6 +31,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Spinner } from "@/components/spinner";
+import { BackButton } from "@/components/BackButton";
 
 export default function PlantDetailPage({
   params,
@@ -243,17 +244,7 @@ export default function PlantDetailPage({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-6">
-        <Link href="/plants">
-          <Button
-            variant="ghost"
-            className="flex items-center gap-2 pl-0 hover:pl-2 transition-all"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Quay lại danh sách
-          </Button>
-        </Link>
-      </div>
+      <BackButton href="/admin/plants"></BackButton>
 
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="p-6 md:p-8">

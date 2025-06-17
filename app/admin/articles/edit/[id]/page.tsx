@@ -7,36 +7,37 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import PlantForm from "@/components/plant/plant-form";
-import { Plant } from "@/app/types/plant";
-import { Spinner } from "@/components/spinner";
+import ArticleForm from "@/components/article/article-form"; // Giả định component form riêng
+import { Spinner } from "@/components/spinner"; // Giả định component Spinner
+import { Article } from "../../[id]/page";
 
-export default function EditPlantPage() {
+export default function EditArticlePage() {
   const router = useRouter();
   const params = useParams();
-  const plantId = params.id;
+  const articleId = params.id;
 
-  const [formData, setFormData] = useState<Plant | null>(null);
+  const [formData, setFormData] = useState<Article | null>(null);
   const [loading, setLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch dữ liệu từ API khi component mount
   useEffect(() => {
-    const fetchPlantDetails = async () => {
+    const fetchArticleDetails = async () => {
       setIsFetching(true);
       try {
         const token = localStorage.getItem("accessToken");
 
-        const response = await fetch(`/api/plants/${plantId}`, {
+        const response = await fetch(`/api/articles/${articleId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         if (!response.ok) {
-          throw new Error("Không thể lấy thông tin cây dược liệu");
+          throw new Error("Không thể lấy thông tin bài viết");
         }
         const data = await response.json();
-        setFormData(data.data);
+        setFormData(data.data); // Giả định API trả về { data: Article }
       } catch (err: any) {
         setError(err.message);
         toast({
@@ -49,35 +50,36 @@ export default function EditPlantPage() {
       }
     };
 
-    if (plantId) {
-      fetchPlantDetails();
+    if (articleId) {
+      fetchArticleDetails();
     }
-  }, [plantId]);
+  }, [articleId]);
 
-  const handleSubmit = async (plant: Plant) => {
+  // Handler lưu thay đổi
+  const handleSubmit = async (article: Article) => {
     setLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
 
-      const response = await fetch(`/api/admin/plants/edit/${plantId}`, {
+      const response = await fetch(`/api/admin/articles/edit/${articleId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(plant),
+        body: JSON.stringify(article),
       });
 
       if (!response.ok) {
-        throw new Error("Không thể cập nhật cây dược liệu");
+        throw new Error("Không thể cập nhật bài viết");
       }
 
       toast({
         title: "Thành công",
-        description: "Đã cập nhật thông tin cây dược liệu",
+        description: "Đã cập nhật thông tin bài viết",
         variant: "success",
       });
-      router.push(`/admin/plants/${plantId}`);
+      router.push(`/admin/articles/${articleId}`); // Quay lại chi tiết bài viết
     } catch (err: any) {
       setError(err.message);
       toast({
@@ -90,28 +92,22 @@ export default function EditPlantPage() {
     }
   };
 
+  // Loading state
   if (isFetching) {
-    return (
-      // <div className="container mx-auto py-8 flex items-center justify-center min-h-[60vh]">
-      //   <div className="text-center">
-      //     <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-current border-r-transparent"></div>
-      //     <p className="mt-4">Đang tải thông tin cây dược liệu...</p>
-      //   </div>
-      // </div>
-      <Spinner></Spinner>
-    );
+    return <Spinner />;
   }
 
+  // Error state
   if (error || !formData) {
     return (
       <div className="container mx-auto py-8">
-        <Link href="/admin/plants">
+        <Link href="/admin/articles">
           <Button variant="outline" size="sm" className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" /> Quay lại danh sách
           </Button>
         </Link>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-          {error || "Không tìm thấy thông tin cây dược liệu"}
+          {error || "Không tìm thấy thông tin bài viết"}
         </div>
       </div>
     );
@@ -120,15 +116,15 @@ export default function EditPlantPage() {
   return (
     <div className="container mx-auto">
       <div className="mb-6">
-        <Link href={`/admin/plants/${plantId}`}>
+        <Link href={`/admin/articles/${articleId}`}>
           <Button variant="outline" size="sm" className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" /> Quay lại chi tiết
           </Button>
         </Link>
       </div>
 
-      <PlantForm 
-        plant={formData}
+      <ArticleForm
+        article={formData}
         isLoading={loading}
         onSubmit={handleSubmit}
         mode="edit"

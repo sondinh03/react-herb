@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.split(" ")[1]
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081"
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL
 
     // Forward the request to the backend
     const response = await fetch(`${apiUrl}/api/plants/${plantId}/media/link`, {
