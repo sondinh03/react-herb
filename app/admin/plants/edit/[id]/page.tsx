@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import PlantForm from "@/components/plant/plant-form";
 import { Plant } from "@/app/types/plant";
 import { Spinner } from "@/components/spinner";
+import { BackButton } from "@/components/BackButton";
 
 export default function EditPlantPage() {
   const router = useRouter();
@@ -118,14 +119,15 @@ export default function EditPlantPage() {
   }
 
   return (
-    <div className="container mx-auto">
-      <div className="mb-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* <div className="mb-6">
         <Link href={`/admin/plants/${plantId}`}>
           <Button variant="outline" size="sm" className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" /> Quay lại chi tiết
           </Button>
         </Link>
-      </div>
+      </div> */}
+      <BackButton href={`/admin/plants/${plantId}`} text="Quay lại chi tiết"></BackButton>
 
       <PlantForm 
         plant={formData}

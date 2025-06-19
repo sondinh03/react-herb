@@ -99,10 +99,6 @@ export default function PlantForm({
     setFormData({ ...formData, images: mediaIds.map((id) => id.toString()) });
   };
 
-  // const handleSaveDraft = async () => {
-  //   await onSubmit({ ...formData, status: PlantStatus.DRAFT }, false);
-  // };
-
   const handleSave = async () => {
     const result = await onSubmit(
       { ...formData, status: PlantStatus.PUBLISHED },
@@ -144,13 +140,6 @@ export default function PlantForm({
           <p className="mt-1 text-sm text-gray-500">{pageDescription}</p>
         </div>
         <div className="mt-4 sm:mt-0 flex gap-2">
-          {/* <Button
-            variant="outline"
-            onClick={handleSaveDraft}
-            disabled={isLoading}
-          >
-            {isLoading ? "Đang lưu..." : "Lưu nháp"}
-          </Button> */}
           <Button
             className="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white transition-all hover:shadow-sm animate-fade-in"
             onClick={handleSave}

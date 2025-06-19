@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import ArticleForm from "@/components/article/article-form"; // Giả định component form riêng
 import { Spinner } from "@/components/spinner"; // Giả định component Spinner
 import { Article } from "../../[id]/page";
+import { BackButton } from "@/components/BackButton";
 
 export default function EditArticlePage() {
   const router = useRouter();
@@ -114,15 +115,8 @@ export default function EditArticlePage() {
   }
 
   return (
-    <div className="container mx-auto">
-      <div className="mb-6">
-        <Link href={`/admin/articles/${articleId}`}>
-          <Button variant="outline" size="sm" className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Quay lại chi tiết
-          </Button>
-        </Link>
-      </div>
-
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <BackButton href={`/admin/articles/${articleId}`}></BackButton>
       <ArticleForm
         article={formData}
         isLoading={loading}

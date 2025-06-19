@@ -37,7 +37,9 @@ export interface Plant {
 
 // Enum cho Status
 export enum PlantStatus {
-  DRAFT = 1,
-  PUBLISHED = 2,
-  PENDING = 3,
+  DRAFT = 1, // Bản nháp
+  PENDING = 2, // Chờ duyệt
+  PUBLISHED = 3, // Đã xuất bản
+  ARCHIVE = 4, // Lưu trữ
+  REJECT = 5, // Từ chối
 }

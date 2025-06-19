@@ -341,22 +341,11 @@ export default function AdminPlantsPage() {
   };
 
   const handleDeletePlant = (plantId: number) => {
-    toast({
-      title: "Chức năng chưa hoàn thiện",
-      description: "Chức năng xóa đang trong quá trình phát triển",
-      variant: "info",
-    });
-    // Show confirmation dialog before deletion
-    // Perform deletion if confirmed
+    handleWait();
   };
 
   const handleApprovePlant = (plantId: number) => {
-    toast({
-      title: "Thông báo",
-      description: "Chức năng duyệt đang trong quá trình phát triển",
-      variant: "info",
-    });
-    // Implement plant approval logic
+    handleWait();
   };
 
   // Handle row click
