@@ -86,8 +86,8 @@ export default function CreateUserPage() {
       fullName: "",
       password: "",
       passwordConfirm: "",
-      roleType: "1", // Default: User
-      status: "1", // Default: Active
+      roleType: ROLE_TYPES.USER.toString(),
+      status: STATUSES.ACTIVE.toString(),
     },
   });
 
@@ -291,8 +291,7 @@ export default function CreateUserPage() {
                       <FormLabel>Vai trò</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        // defaultValue={field.value}
-                        defaultValue={ROLE_TYPES.USER.toString()}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -327,7 +326,7 @@ export default function CreateUserPage() {
                       <FormLabel>Trạng thái</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={STATUSES.ACTIVE.toString()}
+                        value={field.value}
                         disabled={true}
                       >
                         <FormControl>

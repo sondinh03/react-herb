@@ -4,12 +4,13 @@ import { API_ERRORS, callApiPost, extractToken } from "@/lib/api-utils";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     const isAdminCreation = body.isAdminCreation === true;
     const endpoint = isAdminCreation
-      ? "/api/users/create"
+      ? "/api/users"
       : "/api/auth/register";
     const fullUrl = `${apiUrl}${endpoint}`;
+    console.log("fullUrl: " + fullUrl)
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
     if (isAdminCreation) {
       const token = extractToken(request);
       console.log("token: " + token)
-      if (!token) {
+      if (token == null) {
         return NextResponse.json(API_ERRORS.UNAUTHORIZED, { status: 401 });
       }
       headers["Authorization"] = `Bearer ${token}`;
