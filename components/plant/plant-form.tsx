@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -32,6 +31,7 @@ import { Page } from "@/types/api";
 import { DiseaseSelector } from "../diseases/diseases-selector";
 import { PLANT_STATUS_OPTIONS } from "@/constant/plant";
 import { toast } from "@/hooks/use-toast";
+import { CustomActionButton } from "../CustomActionButton";
 
 interface PlantFormProps {
   plant: Plant;
@@ -140,14 +140,12 @@ export default function PlantForm({
           <p className="mt-1 text-sm text-gray-500">{pageDescription}</p>
         </div>
         <div className="mt-4 sm:mt-0 flex gap-2">
-          <Button
-            className="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white transition-all hover:shadow-sm animate-fade-in"
+          <CustomActionButton
             onClick={handleSave}
-            disabled={isLoading}
-          >
-            <Save className="h-4 w-4" />
-            {isLoading ? "Đang lưu..." : "Lưu"}
-          </Button>
+            text={isLoading ? "Đang lưu..." : "Lưu"}
+            icon={<Save className="h-4 w-4" />}
+            variant="add"
+          />
         </div>
       </div>
 

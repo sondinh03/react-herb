@@ -115,7 +115,7 @@ export default function EditArticlePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="py-6 px-4 sm:px-6 lg:px-8">
       <BackButton href={`/admin/articles/${articleId}`}></BackButton>
       <ArticleForm
         article={formData}

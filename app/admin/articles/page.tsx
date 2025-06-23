@@ -59,6 +59,7 @@ import { ActionColumn } from "@/components/ActionColumn";
 import { StatusFilter } from "@/components/StatusFilter";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ARTICLE_STATUS_OPTIONS } from "@/constant/article";
+import { CustomActionButton } from "@/components/CustomActionButton";
 
 interface Article {
   id: number;
@@ -143,50 +144,6 @@ export default function AdminArticlesPage() {
       header: "Lượt xem",
       cell: (article: Article) => article.views,
     },
-    /*
-    {
-      key: "status",
-      header: "Trạng thái",
-      cell: (article: Article) => {
-        let statusLabel = "Không xác định";
-        let statusVariant:
-          | "default"
-          | "secondary"
-          | "success"
-          | "destructive"
-          | "warning" = "default";
-
-        const statusInfo = ARTICLE_STATUS_OPTIONS.find(
-          (status) => status.value === article.status
-        );
-
-        if (statusInfo) {
-          statusLabel = statusInfo.label;
-          switch (statusInfo.value) {
-            case 1: // Bản nháp
-              statusVariant = "warning";
-              break;
-            case 2: // Chờ duyệt
-              statusVariant = "secondary";
-              break;
-            case 3: // Đã xuất bản
-              statusVariant = "success";
-              break;
-            case 4: // Lưu trữ
-              statusVariant = "secondary";
-              break;
-            case 5: // Từ chối
-              statusVariant = "destructive";
-              break;
-            default:
-              statusVariant = "default";
-          }
-        }
-
-        return <Badge variant={statusVariant}>{statusLabel}</Badge>;
-      },
-    },
-    */
     {
       key: "status",
       header: "Trạng thái",
@@ -214,118 +171,6 @@ export default function AdminArticlesPage() {
       key: "actions",
       header: "Thao tác",
       cell: (article: Article) => (
-        /*
-        <div className="flex items-center justify-end space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-            onClick={() => handleViewArticle(article.id)}
-            title="Xem chi tiết"
-          >
-            <Eye className="h-4 w-4" />
-            <span className="sr-only">Xem</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-amber-600 hover:text-amber-800 hover:bg-amber-50"
-            onClick={() => handleEditArticle(article.id)}
-            title="Chỉnh sửa"
-          >
-            <Edit className="h-4 w-4" />
-            <span className="sr-only">Sửa</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-8 w-8 p-0 ${
-              article.status === 2
-                ? "text-green-600 hover:text-green-800 hover:bg-green-50 cursor-pointer"
-                : "text-gray-300 cursor-not-allowed"
-            }`}
-            onClick={
-              article.status === 2
-                ? () => handleApproveArticle(article.id)
-                : undefined
-            }
-            disabled={article.status !== 2}
-            title={
-              article.status === 2
-                ? "Duyệt bài viết"
-                : "Chỉ có thể duyệt bài viết đang chờ duyệt"
-            }
-          >
-            <Check className="h-4 w-4" />
-            <span className="sr-only">Duyệt</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-8 w-8 p-0 ${
-              article.status === 2
-                ? "text-red-600 hover:text-red-800 hover:bg-red-50 cursor-pointer"
-                : "text-gray-300 cursor-not-allowed"
-            }`}
-            onClick={() => handleWait()}
-            disabled={article.status !== 2}
-            title={
-              article.status === 2
-                ? "Từ chối bài viết"
-                : "Chỉ có thể từ chối bài viết đang chờ duyệt"
-            }
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Từ chối</span>
-          </Button>
-
-          {article.status === 3 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-              onClick={() => handleWait()}
-              title="Lưu trữ"
-            >
-              <Archive className="h-4 w-4" />
-              <span className="sr-only">Lưu trữ</span>
-            </Button>
-          )}
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-              >
-                <span className="sr-only">Thao tác khác</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Thao tác khác</DropdownMenuLabel>
-              {article.status !== 1 && (
-                <DropdownMenuItem onClick={() => handleApproveArticle(article.id)}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  <span>Duyệt</span>
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                onClick={() => handleDeleteArticle(article.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Xóa</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        */
         <ActionColumn
           item={article}
           status={article.status}
@@ -409,15 +254,12 @@ export default function AdminArticlesPage() {
             Quản lý các bài viết về cây dược liệu trong hệ thống
           </p>
         </div>
-        <div className="mt-4 sm:mt-0">
-          <Button
-            className="flex items-center gap-1"
-            onClick={handleAddArticle}
-          >
-            <Plus className="h-4 w-4" />
-            Thêm bài viết
-          </Button>
-        </div>
+        <CustomActionButton
+          onClick={handleAddArticle}
+          text="Thêm bài viết"
+          icon={<Plus className="h-4 w-4" />}
+          variant="add"
+        ></CustomActionButton>
       </div>
 
       <SearchPanel
@@ -431,7 +273,7 @@ export default function AdminArticlesPage() {
       />
 
       <DataTable
-        selectable={true}
+        selectable={false}
         onSelectionChange={handleSelectionChange}
         data={articles}
         columns={columns}

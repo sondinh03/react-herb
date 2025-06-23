@@ -1,6 +1,7 @@
 import { Download, Filter, Search } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { handleWait } from "./header";
 
 interface SearchPanelProps {
   keyword: string;
@@ -31,7 +32,7 @@ export function SearchPanel({
           <Input
             type="text"
             placeholder={placeholder}
-            className="pl-10"
+            className="pl-10 focus:border-green-500 focus:ring-green-500"
             value={keyword}
             onChange={(e) => onKeywordChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onSearch()}
@@ -42,7 +43,8 @@ export function SearchPanel({
           <Button
             variant="outline"
             className="flex items-center gap-1"
-            onClick={onSearch}
+            // onClick={onSearch}
+            onClick={handleWait}
           >
             <Filter className="h-4 w-4" />
             Bộ lọc
@@ -51,7 +53,8 @@ export function SearchPanel({
             <Button
               variant="outline"
               className="flex items-center gap-1"
-              onClick={onExport}
+              // onClick={onExport}
+              onClick={handleWait}
             >
               <Download className="h-4 w-4" />
               Export

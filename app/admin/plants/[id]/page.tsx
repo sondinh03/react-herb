@@ -109,21 +109,6 @@ export default function PlantDetailPage() {
     });
   };
 
-  // const getStatusLabel = (
-  //   status: number
-  // ): { label: string; variant: string } => {
-  //   switch (status) {
-  //     case 0:
-  //       return { label: "Bản nháp", variant: "warning" };
-  //     case 1:
-  //       return { label: "Đã xuất bản", variant: "success" };
-  //     case 2:
-  //       return { label: "Chờ duyệt", variant: "secondary" };
-  //     default:
-  //       return { label: "Không xác định", variant: "default" };
-  //   }
-  // };
-
   if (isLoading) {
     return <Spinner></Spinner>;
   }
@@ -154,7 +139,7 @@ export default function PlantDetailPage() {
   const statusInfo = getStatusLabel(plant.status);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="py-6 px-4 sm:px-6 lg:px-8">
       <div className="mb-6">
         <BackButton href="/admin/plants"></BackButton>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">

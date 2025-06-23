@@ -4,6 +4,7 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Filter, Calendar, User, FileText, BookOpen, Tag } from "lucide-react"
+import { handleWait } from "@/components/header"
 
 export default function ResearchPage() {
   return (
@@ -14,13 +15,10 @@ export default function ResearchPage() {
           <p className="mt-2 text-gray-600">Các đề tài nghiên cứu về cây dược liệu</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button onClick={handleWait} variant="outline" className="flex items-center gap-2">
             <Filter className="h-4 w-4" />
             Lọc
           </Button>
-          <Link href="/admin/research/create">
-            <Button>Thêm nghiên cứu</Button>
-          </Link>
         </div>
       </div>
 

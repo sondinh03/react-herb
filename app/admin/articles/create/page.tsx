@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { Article } from "../[id]/page";
 import ArticleForm from "@/components/article/article-form";
 import { ArticleStatus } from "@/app/types/article";
+import { BackButton } from "@/components/BackButton";
 
 export default function CreateArticlePage() {
   const router = useRouter();
@@ -80,15 +81,8 @@ export default function CreateArticlePage() {
   };
 
   return (
-    <div>
-      <div className="mb-6 px-4 sm:px-6">
-        <Link href="/admin/articles">
-          <Button variant="ghost" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Quay lại danh sách
-          </Button>
-        </Link>
-      </div>
+    <div className="py-6 px-4 sm:px-6 lg:px-8">
+      <BackButton href={`/admin/articles`}></BackButton>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 mx-4 sm:mx-6">

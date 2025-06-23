@@ -45,28 +45,54 @@ import { SearchPanel } from "@/components/SearchPanel";
 import { DataTable } from "@/components/DataTable";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
-import { PLANT_STATUS_OPTIONS } from "@/constant/plant";
 import { handleWait } from "@/components/header";
 import { CustomActionButton } from "@/components/CustomActionButton";
 import { ActionColumn } from "@/components/ActionColumn";
 
-interface Plant {
+interface Research {
   id: number;
-  name: string;
-  scientificName: string;
-  family: string;
-  partsUsed: string;
+  title: string;
+  slug: string;
+  abstractText: string;
+  content: string;
+  authors: string;
+  institution: string;
+  publishedYear: number;
+  journal: string;
+  field: string;
   status: number;
+  views: number;
+  plants: Plant[];
+  tags: Tag[];
   createdAt: string;
   updatedAt: string;
 }
 
-export default function AdminPlantsPage() {
+interface Plant {
+  id: number;
+  name: string;
+}
+
+interface Tag {
+  id: number;
+  name: string;
+}
+
+// Giả định các trạng thái nghiên cứu
+const RESEARCH_STATUS_OPTIONS = [
+  { value: 1, label: "Bản nháp", variant: "warning" },
+  { value: 2, label: "Chờ duyệt", variant: "secondary" },
+  { value: 3, label: "Đã xuất bản", variant: "success" },
+  { value: 4, label: "Lưu trữ", variant: "secondary" },
+  { value: 5, label: "Từ chối", variant: "destructive" },
+];
+
+export default function AdminResearchPage() {
   const router = useRouter();
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
   const {
-    data: plants,
+    data: researches,
     isLoading,
     error,
     pagination,
@@ -76,8 +102,8 @@ export default function AdminPlantsPage() {
     handlePageChange,
     handlePageSizeChange,
     handleFilterChange,
-  } = useDataSearch<Plant>({
-    apiEndpoint: "/api/plants/search",
+  } = useDataSearch<Research>({
+    apiEndpoint: "/api/research/search",
     initialParams: {
       pageIndex: 1,
       pageSize: 10,
@@ -91,9 +117,8 @@ export default function AdminPlantsPage() {
     handleFilterChange("status", value !== "all" ? value : "");
   };
 
-  const handleSelectionChange = (selected: Plant[]) => {
-    setSelectedPlants(selected);
-    console.log("Selected plants:", selected);
+  const handleSelectionChange = (selected: Research[]) => {
+    console.log("Selected researches:", selected);
   };
 
   // Define table columns
@@ -101,71 +126,53 @@ export default function AdminPlantsPage() {
     {
       key: "id",
       header: "ID",
-      cell: (plant: Plant) => <span className="font-medium">{plant.id}</span>,
+      cell: (research: Research) => <span className="font-medium">{research.id}</span>,
       className: "w-[50px]",
     },
     {
-      key: "name",
-      header: "Tên cây",
-      cell: (plant: Plant) => <span className="font-medium">{plant.name}</span>,
+      key: "title",
+      header: "Tiêu đề",
+      cell: (research: Research) => <span className="font-medium">{research.title}</span>,
     },
     {
-      key: "scientificName",
-      header: "Tên khoa học",
-      cell: (plant: Plant) => (
-        <span className="italic">{plant.scientificName}</span>
-      ),
+      key: "authors",
+      header: "Tác giả",
+      cell: (research: Research) => research.authors || "Chưa có",
     },
     {
-      key: "family",
-      header: "Họ",
-      cell: (plant: Plant) => plant.family,
+      key: "publishedYear",
+      header: "Năm xuất bản",
+      cell: (research: Research) => research.publishedYear || "Chưa có",
     },
     {
-      key: "parts",
-      header: "Bộ phận dùng",
-      cell: (plant: Plant) => plant.partsUsed,
+      key: "journal",
+      header: "Tạp chí",
+      cell: (research: Research) => research.journal || "Chưa có",
+    },
+    {
+      key: "field",
+      header: "Lĩnh vực",
+      cell: (research: Research) => research.field || "Chưa có",
+    },
+    {
+      key: "views",
+      header: "Lượt xem",
+      cell: (research: Research) => research.views || 0,
     },
     {
       key: "status",
       header: "Trạng thái",
-      cell: (plant: Plant) => {
+      cell: (research: Research) => {
         let statusLabel = "Không xác định";
-        let statusVariant:
-          | "default"
-          | "secondary"
-          | "success"
-          | "destructive"
-          | "warning" = "default";
+        let statusVariant: "default" | "secondary" | "success" | "destructive" | "warning" = "default";
 
-        // Tìm thông tin trạng thái từ PLANT_STATUS_OPTIONS
-        const statusInfo = PLANT_STATUS_OPTIONS.find(
-          (status) => status.value === plant.status
+        const statusInfo = RESEARCH_STATUS_OPTIONS.find(
+          (status) => status.value === research.status
         );
 
         if (statusInfo) {
           statusLabel = statusInfo.label;
-
-          // Xác định variant dựa trên loại trạng thái
-          switch (statusInfo.value) {
-            case 1: // Bản nháp
-              statusVariant = "warning";
-              break;
-            case 2: // Chờ duyệt
-              statusVariant = "secondary";
-              break;
-            case 3: // Đã xuất bản
-              statusVariant = "success";
-              break;
-            case 4: // Lưu trữ
-              statusVariant = "secondary";
-              break;
-            case 5: // Từ chối
-              statusVariant = "destructive";
-              break;
-            default:
-              statusVariant = "default";
-          }
+          statusVariant = statusInfo.variant as any;
         }
 
         return <Badge variant={statusVariant}>{statusLabel}</Badge>;
@@ -174,33 +181,33 @@ export default function AdminPlantsPage() {
     {
       key: "createdAt",
       header: "Ngày tạo",
-      cell: (plant: Plant) => {
-        const date = new Date(plant.createdAt);
+      cell: (research: Research) => {
+        const date = new Date(research.createdAt);
         return date.toLocaleDateString("vi-VN");
       },
     },
     {
       key: "updatedAt",
       header: "Cập nhật",
-      cell: (plant: Plant) => {
-        const date = new Date(plant.updatedAt);
+      cell: (research: Research) => {
+        const date = new Date(research.updatedAt);
         return date.toLocaleDateString("vi-VN");
       },
     },
     {
       key: "actions",
       header: "Thao tác",
-      cell: (plant: Plant) => (
+      cell: (research: Research) => (
         <ActionColumn
-          item={plant}
-          status={plant.status}
-          onView={handleViewPlant}
-          onEdit={handleEditPlant}
-          onApprove={handleApprovePlant}
+          item={research}
+          status={research.status}
+          onView={handleViewResearch}
+          onEdit={handleEditResearch}
+          onApprove={handleApproveResearch}
           onReject={handleWait}
           onArchive={handleWait}
-          onDelete={handleDeletePlant}
-          statusOptions={PLANT_STATUS_OPTIONS}
+          onDelete={handleDeleteResearch}
+          statusOptions={RESEARCH_STATUS_OPTIONS}
         />
       ),
       className: "w-[120px]",
@@ -214,7 +221,7 @@ export default function AdminPlantsPage() {
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="all">Tất cả trạng thái</SelectItem>
-        {PLANT_STATUS_OPTIONS.map((status) => (
+        {RESEARCH_STATUS_OPTIONS.map((status) => (
           <SelectItem key={status.value} value={status.value.toString()}>
             {status.label}
           </SelectItem>
@@ -223,29 +230,29 @@ export default function AdminPlantsPage() {
     </Select>
   );
 
-  const handleAddPlant = () => {
-    router.push("/admin/plants/create");
+  const handleAddResearch = () => {
+    router.push("/admin/research/create");
   };
 
-  const handleViewPlant = (plantId: number) => {
-    router.push(`/admin/plants/${plantId}`);
+  const handleViewResearch = (researchId: number) => {
+    router.push(`/admin/research/${researchId}`);
   };
 
-  const handleEditPlant = (plantId: number) => {
-    router.push(`/admin/plants/edit/${plantId}`);
+  const handleEditResearch = (researchId: number) => {
+    router.push(`/admin/research/edit/${researchId}`);
   };
 
-  const handleDeletePlant = (plantId: number) => {
+  const handleDeleteResearch = (researchId: number) => {
     handleWait();
   };
 
-  const handleApprovePlant = (plantId: number) => {
+  const handleApproveResearch = (researchId: number) => {
     handleWait();
   };
 
   // Handle row click
-  const handleRowClick = (plant: Plant) => {
-    handleViewPlant(plant.id);
+  const handleRowClick = (research: Research) => {
+    handleViewResearch(research.id);
   };
 
   return (
@@ -253,15 +260,15 @@ export default function AdminPlantsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Quản lý cây dược liệu
+            Quản lý nghiên cứu khoa học
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Quản lý thông tin các loại cây dược liệu trong hệ thống
+            Quản lý thông tin các nghiên cứu khoa học trong hệ thống
           </p>
         </div>
         <CustomActionButton
-          onClick={handleAddPlant}
-          text="Thêm cây dược liệu"
+          onClick={handleAddResearch}
+          text="Thêm nghiên cứu"
           icon={<Plus className="h-4 w-4" />}
           variant="add"
         />
@@ -274,20 +281,20 @@ export default function AdminPlantsPage() {
         filterComponents={filterComponents}
         showExport={true}
         onExport={handleWait}
-        placeholder="Tìm kiếm cây dược liệu..."
+        placeholder="Tìm kiếm nghiên cứu..."
       />
 
       <DataTable
         selectable={false}
         onSelectionChange={handleSelectionChange}
-        data={plants}
+        data={researches}
         columns={columns}
         isLoading={isLoading}
         error={error}
         pagination={pagination}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
-        emptyMessage="Không tìm thấy cây dược liệu nào"
+        emptyMessage="Không tìm thấy nghiên cứu nào"
         labels={{
           previous: "Trước",
           next: "Sau",

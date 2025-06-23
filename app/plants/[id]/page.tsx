@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/card";
 import { Spinner } from "@/components/spinner";
 import { BackButton } from "@/components/BackButton";
+import { handleWait } from "@/components/header";
 
 export default function PlantDetailPage({
   params,
@@ -244,7 +245,7 @@ export default function PlantDetailPage({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <BackButton href="/admin/plants"></BackButton>
+      <BackButton href="/plants"></BackButton>
 
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="p-6 md:p-8">
@@ -254,26 +255,26 @@ export default function PlantDetailPage({
               <p className="mt-2 text-gray-600">{plant.scientificName}</p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" onClick={handleWait}>
                 <Share2 className="h-4 w-4" />
                 <span className="sr-only">Chia sẻ</span>
               </Button>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon"  onClick={handleWait}>
                 <Printer className="h-4 w-4" />
                 <span className="sr-only">In</span>
               </Button>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon"  onClick={handleWait}>
                 <Download className="h-4 w-4" />
                 <span className="sr-only">Tải xuống</span>
               </Button>
-              <Button variant="outline" className="flex items-center gap-2">
+              {/* <Button variant="outline" className="flex items-center gap-2">
                 <Edit className="h-4 w-4" />
                 Sửa
               </Button>
               <Button variant="destructive" className="flex items-center gap-2">
                 <Trash2 className="h-4 w-4" />
                 Xóa
-              </Button>
+              </Button> */}
             </div>
           </div>
 
