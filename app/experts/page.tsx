@@ -18,9 +18,6 @@ export default function ExpertsPage() {
             <Filter className="h-4 w-4" />
             Lọc
           </Button>
-          <Link href="/admin/experts/create">
-            <Button>Thêm chuyên gia</Button>
-          </Link>
         </div>
       </div>
 

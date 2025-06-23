@@ -119,14 +119,7 @@ export default function EditPlantPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* <div className="mb-6">
-        <Link href={`/admin/plants/${plantId}`}>
-          <Button variant="outline" size="sm" className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Quay lại chi tiết
-          </Button>
-        </Link>
-      </div> */}
+    <div className="py-6 px-4 sm:px-6 lg:px-8">
       <BackButton href={`/admin/plants/${plantId}`} text="Quay lại chi tiết"></BackButton>
 
       <PlantForm 

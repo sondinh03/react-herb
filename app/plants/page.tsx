@@ -300,17 +300,6 @@ export default function PlantsPage() {
             Danh sách các loại cây dược liệu Việt Nam
           </p>
         </div>
-        {/** 
-        <div className="flex gap-2">
-          <Button variant="outline" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Lọc
-          </Button>
-          <Link href="/admin/plants/create">
-            <Button>Thêm cây dược liệu</Button>
-          </Link>
-        </div>
-        */}
       </div>
       <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
@@ -617,3 +606,5 @@ export default function PlantsPage() {
     </div>
   );
 }
+
+
