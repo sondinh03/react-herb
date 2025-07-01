@@ -34,7 +34,7 @@ export interface Article {
   publishedAt: string | null;
   authorId: number;
   diseaseId: number | null;
-  featuredImage: string | null;
+  featuredImage: number | null;
 }
 
 const ARTICLE_STATUS_OPTIONS = [

@@ -1,4 +1,4 @@
-import { ROLE_TYPE_LABELS, ROLE_TYPES } from "@/constant/user";
+import { ROLE_TYPE_LABELS, ROLE_TYPES } from "@/constants/user";
 import { Badge } from "../ui/badge";
 
 interface RoleBadgeProps {

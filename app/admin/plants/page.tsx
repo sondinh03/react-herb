@@ -45,7 +45,7 @@ import { SearchPanel } from "@/components/SearchPanel";
 import { DataTable } from "@/components/DataTable";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
-import { PLANT_STATUS_OPTIONS } from "@/constant/plant";
+import { PLANT_STATUS_OPTIONS } from "@/constants/plant";
 import { handleWait } from "@/components/header";
 import { CustomActionButton } from "@/components/CustomActionButton";
 import { ActionColumn } from "@/components/ActionColumn";

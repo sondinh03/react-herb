@@ -58,7 +58,7 @@ import { useRouter } from "next/navigation";
 import { ActionColumn } from "@/components/ActionColumn";
 import { StatusFilter } from "@/components/StatusFilter";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ARTICLE_STATUS_OPTIONS } from "@/constant/article";
+import { ARTICLE_STATUS_OPTIONS } from "@/constants/article";
 import { CustomActionButton } from "@/components/CustomActionButton";
 
 interface Article {

@@ -41,7 +41,7 @@ import {
   ROLE_TYPES,
   STATUS_LABELS,
   STATUSES,
-} from "@/constant/user";
+} from "@/constants/user";
 import { Spinner } from "@/components/spinner";
 
 // Định nghĩa schema validation cho form chỉnh sửa

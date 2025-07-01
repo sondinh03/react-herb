@@ -116,7 +116,6 @@ export function PlantMediaTab({
       setUploadProgress(100);
 
       console.log("Đã bắt đầu gọi onMediaChange")
-      alert("Đã bắt đầu gọi onMediaChange");
       
       // Cập nhật danh sách media IDs
       onMediaChange(newMediaIds);
@@ -235,7 +234,6 @@ export function PlantMediaTab({
     }
   };
 
-  // Các hàm khác giữ nguyên
   const handleOpenFileDialog = useCallback(() => {
     if (fileInputRef.current) {
       fileInputRef.current.click();

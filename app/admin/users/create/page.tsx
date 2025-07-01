@@ -39,7 +39,7 @@ import {
   ROLE_TYPES,
   STATUS_LABELS,
   STATUSES,
-} from "@/constant/user";
+} from "@/constants/user";
 
 // Định nghĩa schema validation
 const userFormSchema = z

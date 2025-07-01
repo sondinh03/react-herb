@@ -17,7 +17,7 @@ import { Eye, EyeOff, Leaf } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { AUTH_ERRORS } from "../api/login/error-messages";
-import { ROLE_TYPES } from "@/constant/user";
+import { ROLE_TYPES } from "@/constants/user";
 import { handleWait } from "@/components/header";
 
 export default function LoginPage() {
