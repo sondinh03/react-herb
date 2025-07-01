@@ -29,7 +29,7 @@ import { DiseasesResponse } from "@/app/types/diseases";
 import { fetchApi } from "@/lib/api-client";
 import { Page } from "@/types/api";
 import { DiseaseSelector } from "../diseases/diseases-selector";
-import { PLANT_STATUS_OPTIONS } from "@/constant/plant";
+import { PLANT_STATUS_OPTIONS } from "@/constants/plant";
 import { toast } from "@/hooks/use-toast";
 import { CustomActionButton } from "../CustomActionButton";
 

@@ -23,7 +23,7 @@ import {
   ROLE_TYPES,
   STATUS_LABELS,
   STATUSES,
-} from "@/constant/user";
+} from "@/constants/user";
 
 // interface User {
 //   id: number;

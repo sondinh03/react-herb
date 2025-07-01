@@ -80,16 +80,6 @@ export async function getMediaById(
   signal?: AbortSignal
 ): Promise<ApiResponse<MediaResponse>> {
   try {
-    // Validate input
-    // if (!id || id <= 0) {
-    //   return {
-    //     success: false,
-    //     code: 400,
-    //     message: "ID media không hợp lệ",
-    //   };
-    // }
-     
-
     const token = localStorage.getItem("accessToken");
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -106,48 +96,11 @@ export async function getMediaById(
       signal,
     });
 
-    // Check abort status after fetch
-    // if (signal?.aborted) {
-    //   console.warn(`Request for media ${id} was aborted during fetch`);
-    //   return {
-    //     success: false,
-    //     code: 499,
-    //     message: "Request đã bị hủy trong quá trình tải",
-    //   };
-    // }
-
-    // console.log(`📡 Response for media ${id}:`, {
-    //   status: response.status,
-    //   ok: response.ok,
-    //   aborted: signal?.aborted,
-    // });
-
     if (!response.ok) {
       throw new Error(`Không thể lấy thông tin media: ${response.status}`);
     }
 
     return await response.json();
-
-    // Parse JSON with abort check
-    // const data = await response.json();
-
-    // if (signal?.aborted) {
-    //   console.warn(`Request for media ${id} was aborted after receiving data`);
-    //   return {
-    //     success: false,
-    //     code: 499,
-    //     message: "Request đã bị hủy sau khi nhận dữ liệu",
-    //   };
-    // }
-
-    // console.log(`✅ Successfully fetched media ${id}`);
-
-    // return {
-    //   success: true,
-    //   code: 200,
-    //   data,
-    //   message: "Thành công",
-    // };
   } catch (error: any) {
     console.error(`💥 Error fetching media ${id}:`, {
       name: error.name,

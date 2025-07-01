@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ROLE_TYPE_LABELS, ROLE_TYPES, STATUSES } from "@/constant/user";
+import { ROLE_TYPE_LABELS, ROLE_TYPES, STATUSES } from "@/constants/user";
 import { fetchApi } from "@/lib/api-client";
 import { RegisterResponse } from "../types/user";
 

@@ -49,9 +49,10 @@ import {
   ROLE_TYPES,
   STATUS_LABELS,
   STATUSES,
-} from "@/constant/user";
+} from "@/constants/user";
 import { User } from "@/app/types/user";
 import { fetchApi } from "@/lib/api-client";
+import { handleWait } from "@/components/header";
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -293,12 +294,7 @@ export default function AdminUsersPage() {
   };
 
   const handleSendEmail = (userId: number) => {
-    toast({
-      title: "Thông báo",
-      description: "Chức năng đang trong quá trình phát triển",
-      variant: "info",
-    });
-    // Mở form gửi email
+    handleWait();
   };
 
   const handleChangePassword = (userId: number) => {

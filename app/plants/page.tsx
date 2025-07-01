@@ -29,6 +29,12 @@ import { GenericSelector } from "@/components/GenericSelector";
 import { Page, SearchParams } from "@/types/api";
 import { Plant } from "../types/plant";
 import { DiseasesResponse } from "../types/diseases";
+import { PAGINATION } from "@/constants/pagination";
+import { ViewType } from "@/types/common";
+
+// ============================================================================
+// TYPE DEFINITIONS - Định nghĩa các interface và types
+// ============================================================================
 
 // Định nghĩa các interface
 interface Tag {
@@ -48,6 +54,7 @@ interface Media {
   url?: string;
 }
 
+/** Response interface khi set featured media */
 interface MediaFeaturedResponse {
   code: number;
   success: boolean;
@@ -57,13 +64,28 @@ interface MediaFeaturedResponse {
   };
 }
 
+// ============================================================================
+// MAIN COMPONENT - Component chính
+// ============================================================================
+
 export default function PlantsPage() {
+  // --------------------------------------------------------------------------
+  // HOOKS & ROUTER SETUP - Thiết lập hooks và router
+  // --------------------------------------------------------------------------
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // --------------------------------------------------------------------------
+  // STATE MANAGEMENT - Quản lý state
+  // --------------------------------------------------------------------------
+
+  /** State chính cho tham số tìm kiếm và phân trang */
   const [searchState, setSearchState] = useState<SearchParams>({
     pageIndex: Number.parseInt(searchParams.get("page") || "1", 10),
-    pageSize: Number.parseInt(searchParams.get("size") || "12", 10),
+    pageSize: Number.parseInt(
+      searchParams.get("size") || PAGINATION.DEFAULT_PAGE_SIZE.toString(),
+      10
+    ),
     keyword: searchParams.get("keyword") || "",
     sortField: searchParams.get("sortField") || "",
     sortDirection: searchParams.get("sortDirection") || "asc",
@@ -79,9 +101,13 @@ export default function PlantsPage() {
   const [error, setError] = useState<string | null>(null);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [viewType, setViewType] = useState<"grid" | "list">("grid");
+  const [viewType, setViewType] = useState<ViewType>("grid");
   const [diseases, setDiseases] = useState<DiseasesResponse[]>([]);
   const [isLoadingDiseases, setIsLoadingDiseases] = useState(false);
+
+  // --------------------------------------------------------------------------
+  // API FUNCTIONS - Các hàm gọi API
+  // --------------------------------------------------------------------------
 
   const fetchPlants = async () => {
     setIsLoading(true);
@@ -291,8 +317,13 @@ export default function PlantsPage() {
     }
   }, [plants]);
 
+  // --------------------------------------------------------------------------
+  // MAIN RENDER - Render chính của component
+  // --------------------------------------------------------------------------
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Cây dược liệu</h1>
@@ -301,8 +332,11 @@ export default function PlantsPage() {
           </p>
         </div>
       </div>
+
+      {/* Search and Filter Section */}
       <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Search Input */}
           <div className="col-span-1 md:col-span-7">
             <div className="relative">
               <Input
@@ -333,6 +367,8 @@ export default function PlantsPage() {
               )}
             </div>
           </div>
+
+          {/* Disease Filter */}
           <div className="col-span-1 md:col-span-3">
             {isLoadingDiseases ? (
               <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
@@ -351,6 +387,7 @@ export default function PlantsPage() {
               />
             )}
           </div>
+
           <div className="col-span-1 md:col-span-2">
             <Select value={getSortByValue} onValueChange={handleSortChange}>
               <SelectTrigger className="w-full">
@@ -606,5 +643,3 @@ export default function PlantsPage() {
     </div>
   );
 }
-
-

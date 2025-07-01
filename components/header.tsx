@@ -14,6 +14,8 @@ import {
   LogOut,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { toast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,8 +24,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { toast } from "@/hooks/use-toast";
 
 const navigation = [
   { name: "Trang chủ", href: "/" },

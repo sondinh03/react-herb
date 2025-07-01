@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { Plant } from "@/app/types/plant";
-import { getStatusLabel } from "@/constant/plant";
+import { getStatusLabel } from "@/constants/plant";
 import { Spinner } from "@/components/spinner";
 import { BackButton } from "@/components/BackButton";
 /*

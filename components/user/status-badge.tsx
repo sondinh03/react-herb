@@ -1,4 +1,4 @@
-import { STATUS_LABELS, STATUSES } from "@/constant/user";
+import { STATUS_LABELS, STATUSES } from "@/constants/user";
 import { Badge } from "../ui/badge";
 
 interface StatusBadgeProps {

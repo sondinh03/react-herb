@@ -386,12 +386,16 @@ export default function ArticlesPage() {
                 articles.map((article) => (
                   <Card key={article.id} className="overflow-hidden">
                     <div className="h-48 bg-green-50 relative overflow-hidden">
-                      {article.featuredImage ? (
-                        <img
-                          src={article.featuredImage}
-                          className="w-full h-full object-cover"
-                          alt={article.title}
-                        />
+                      {article.featuredImage && article.featuredImage > 0 ? (
+                          <MediaViewer
+                            mediaId={article.featuredImage}
+                            className="w-full h-full object-cover"
+                            width="100%"
+                            height="100%"
+                            alt={article.title}
+                            showLoader={true}
+                            priority={false}
+                          />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100">
                           <ImageIcon className="h-8 w-8 text-gray-400" />
@@ -512,11 +516,15 @@ export default function ArticlesPage() {
                   >
                     <div className="flex flex-col sm:flex-row">
                       <div className="sm:w-48 h-48 sm:h-auto bg-green-50 flex-shrink-0">
-                        {article.featuredImage ? (
-                          <img
-                            src={article.featuredImage}
+                        {article.featuredImage && article.featuredImage > 0 ? (
+                          <MediaViewer
+                            mediaId={article.featuredImage}
                             className="w-full h-full object-cover"
+                            width="100%"
+                            height="100%"
                             alt={article.title}
+                            showLoader={true}
+                            priority={false}
                           />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100">
@@ -541,9 +549,9 @@ export default function ArticlesPage() {
                           <div className="flex items-center text-gray-500 text-sm">
                             <Calendar className="h-4 w-4 mr-1" />
                             {article.publishedAt
-                              ? new Date(article.publishedAt).toLocaleDateString(
-                                  "vi-VN"
-                                )
+                              ? new Date(
+                                  article.publishedAt
+                                ).toLocaleDateString("vi-VN")
                               : "Chưa xuất bản"}
                           </div>
                         </div>

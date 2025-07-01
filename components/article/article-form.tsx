@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -31,41 +31,156 @@ import {
   ListOrdered,
   Image,
   Code,
+  X,
+  Loader2,
 } from "lucide-react";
 import { Article } from "@/app/admin/articles/[id]/page";
 import { Textarea } from "../ui/textarea";
-import { ARTICLE_STATUS_OPTIONS } from "@/constant/article";
-import { PLANT_STATUS_OPTIONS } from "@/constant/plant";
+import { PLANT_STATUS_OPTIONS } from "@/constants/plant";
+import { toast } from "@/components/ui/use-toast"; // Giả định có toast component
+import { uploadMedia } from "@/services/media-service";
 
 interface ArticleFormProps {
   article: Article;
   isLoading: boolean;
   onSubmit: (article: Article) => void;
   mode: "edit" | "create";
+  onImageUpload?: (file: File) => Promise<string>; // Callback để xử lý upload ảnh
 }
 
 export default function ArticleForm({
   article,
-  isLoading,
+  isLoading = false,
   onSubmit,
   mode,
+  onImageUpload,
 }: ArticleFormProps) {
   const [formData, setFormData] = useState<Article>(article);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    article.featuredImage || null
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (
     field: keyof Article,
     value: string | boolean | number | null
   ) => {
-    setFormData((prev) => {
-      if (prev) {
-        return {
-          ...prev,
-          [field]: value,
-        };
-      }
-      return prev;
-    });
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
+
+  const handleOpenFileDialog = useCallback(() => {
+    if (fileInputRef.current && !isUploadingImage) {
+      fileInputRef.current.click();
+    }
+  }, [isUploadingImage]);
+
+  const handleFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      // Validate file type
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Lỗi",
+          description: "Chỉ hỗ trợ file ảnh định dạng JPG, PNG, WEBP",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (5MB max)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        toast({
+          title: "Lỗi",
+          description: "Kích thước file không được vượt quá 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        setIsUploadingImage(true);
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImagePreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+
+        const formDataToSend = new FormData();
+        formDataToSend.append("file", file);
+        formDataToSend.append(
+          "altText",
+          `Hình ảnh cho bài viết ${formData.id || "mới"}`
+        );
+        if (formData.id) {
+          formDataToSend.append("articleId", formData.id);
+        }
+        if (formData.isFeatured != null) {
+          formDataToSend.append("isFeatured", true);
+        }
+
+        const response = await fetch("/api/media/upload", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+          body: formDataToSend,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || "Không thể tải lên hình ảnh");
+        }
+
+        handleInputChange("featuredImage", data.data.id); // Save media ID
+        setImagePreview(data.data.url || data.data.id); // Use URL if provided, otherwise fallback to ID
+
+        toast({
+          title: "Thành công",
+          description: "Đã tải ảnh lên thành công",
+        });
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        toast({
+          title: "Lỗi",
+          description: "Có lỗi xảy ra khi tải ảnh lên",
+          variant: "destructive",
+        });
+        // Reset preview on error
+        setImagePreview(formData.featuredImage || null);
+      } finally {
+        setIsUploadingImage(false);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      }
+    },
+    [formData.id, formData.featuredImage]
+  );
+
+  const handleRemoveImage = useCallback(() => {
+    setImagePreview(null);
+    handleInputChange("featuredImage", null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
 
   const handleSelectChange = (field: string, value: string) => {
     if (field === "status") {
@@ -187,26 +302,70 @@ export default function ArticleForm({
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="aspect-video bg-gray-100 rounded-md overflow-hidden">
-                        <img
-                          src={
-                            formData.featuredImage ||
-                            "/placeholder.svg?height=400&width=800&text=Ảnh+bìa"
-                          }
-                          alt="Ảnh bìa"
-                          className="w-full h-full object-cover"
-                        />
+                      <div className="aspect-video bg-gray-100 rounded-md overflow-hidden relative group">
+                        {formData.featuredImage ? (
+                          <>
+                            <MediaViewer
+                              mediaId={formData.featuredImage}
+                              className="w-full h-full object-cover"
+                              width="100%"
+                              height="100%"
+                              alt="Ảnh bìa"
+                              showLoader={true}
+                              priority={false}
+                            />
+                            {!isUploadingImage && (
+                              <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  onClick={handleRemoveImage}
+                                  className="h-8 w-8"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                            {isUploadingImage && (
+                              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                <Loader2 className="h-8 w-8 animate-spin text-white" />
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <div className="text-center">
+                              <Image className="h-12 w-12 mx-auto mb-2" />
+                              <p className="text-sm">Chưa có ảnh bìa</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <Button
+                        type="button"
                         variant="outline"
-                        className="w-full flex items-center gap-1"
-                        onClick={() => {
-                          /* Logic tải ảnh, cập nhật featuredImage */
-                        }}
+                        className="w-full flex items-center gap-2"
+                        onClick={handleOpenFileDialog}
+                        disabled={isLoading || isUploadingImage}
                       >
-                        <Upload className="h-4 w-4" />
-                        Tải lên ảnh bìa
+                        {isUploadingImage ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Đang tải lên...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4" />
+                            {imagePreview
+                              ? "Thay đổi ảnh bìa"
+                              : "Tải lên ảnh bìa"}
+                          </>
+                        )}
                       </Button>
+                      <p className="text-xs text-gray-500">
+                        Hỗ trợ JPG, PNG, WEBP. Tối đa 5MB.
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -318,15 +477,14 @@ export default function ArticleForm({
                 <Label htmlFor="seoTitle">Tiêu đề SEO</Label>
                 <Input
                   id="seoTitle"
-                  value={formData.title || ""} // Giả định dùng title làm seoTitle tạm thời
-                  onChange={(e) => handleInputChange("title", e.target.value)} // Cập nhật title thay vì seoTitle
+                  value={formData.title || ""}
+                  onChange={(e) => handleInputChange("title", e.target.value)}
                   placeholder="Nhập tiêu đề SEO"
                 />
                 <p className="text-xs text-gray-500">
                   Tiêu đề hiển thị trên kết quả tìm kiếm (tối đa 60 ký tự)
                 </p>
               </div>
-              {/* Thêm các trường SEO khác nếu cần */}
             </CardContent>
             <CardFooter className="flex justify-end">
               <Button type="submit" disabled={isLoading}>
@@ -342,6 +500,15 @@ export default function ArticleForm({
           </Button>
         </div>
       </Tabs>
+
+      {/* Hidden file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/jpeg,image/jpg,image/png,image/webp"
+        className="hidden"
+      />
     </form>
   );
 }
