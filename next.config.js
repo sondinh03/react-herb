@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    eslint: {
+  basePath: '/duoclieu',
+  eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
@@ -10,16 +11,16 @@ const nextConfig = {
     domains: ["localhost"],
     remotePatterns: [
       {
-        protocol: 'http',
-        hostname: '**',
+        protocol: "http",
+        hostname: "**",
       },
       {
-        protocol: 'https',
-        hostname: '**',
+        protocol: "https",
+        hostname: "**",
       },
     ],
     unoptimized: true,
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

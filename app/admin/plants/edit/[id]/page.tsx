@@ -93,12 +93,6 @@ export default function EditPlantPage() {
 
   if (isFetching) {
     return (
-      // <div className="container mx-auto py-8 flex items-center justify-center min-h-[60vh]">
-      //   <div className="text-center">
-      //     <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-current border-r-transparent"></div>
-      //     <p className="mt-4">Đang tải thông tin cây dược liệu...</p>
-      //   </div>
-      // </div>
       <Spinner></Spinner>
     );
   }
