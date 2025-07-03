@@ -39,6 +39,7 @@ import { Textarea } from "../ui/textarea";
 import { PLANT_STATUS_OPTIONS } from "@/constants/plant";
 import { toast } from "@/components/ui/use-toast"; // Giả định có toast component
 import { uploadMedia } from "@/services/media-service";
+import MediaViewer from "../media/media-viewer";
 
 interface ArticleFormProps {
   article: Article;

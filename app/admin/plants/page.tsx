@@ -63,7 +63,9 @@ interface Plant {
 
 export default function AdminPlantsPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [formData, setFormData] = useState<Plant>();
 
   const {
     data: plants,
@@ -196,7 +198,7 @@ export default function AdminPlantsPage() {
           status={plant.status}
           onView={handleViewPlant}
           onEdit={handleEditPlant}
-          onApprove={handleApprovePlant}
+          onApprove={handleWait}
           onReject={handleWait}
           onArchive={handleWait}
           onDelete={handleDeletePlant}
@@ -239,9 +241,27 @@ export default function AdminPlantsPage() {
     handleWait();
   };
 
-  const handleApprovePlant = (plantId: number) => {
-    handleWait();
-  };
+  // const handleApprovePlant = async (plantId: number) => {
+  //   handleWait();
+  //   setLoading(true);
+
+  //   try {
+  //     const token = localStorage.getItem("accessToken");
+
+  //     const response = await fetch(`/api/admin/plants/edit/${plantId}`, {
+  //       method: "PUT",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         "Authorization": `Bearer ${token}`,
+  //       },
+  //       body: JSON.stringify(plant),
+  //     });
+  //   } catch {
+
+  //   } finally {
+
+  //   }
+  // };
 
   // Handle row click
   const handleRowClick = (plant: Plant) => {

@@ -878,26 +878,6 @@ export default function ArticleDetailPage({
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
           {/* Article Content */}
           <div className="lg:col-span-3">
-            {/* Featured Image */}
-            {/* {article.featuredImage != null ? (
-              <MediaViewer
-                mediaId={article.featuredImage}
-                className="w-full h-full object-cover"
-                width="100%"
-                height="100%"
-                alt={article.title}
-                showLoader={true}
-                priority={false}
-              />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100">
-                <ImageIcon className="h-8 w-8 text-gray-400" />
-                <span className="mt-2 text-sm text-gray-500">
-                  Không có hình ảnh
-                </span>
-              </div>
-            )} */}
-
             {/* Article Body */}
             <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
               <div

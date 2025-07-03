@@ -31,7 +31,7 @@ const navigation = [
   { name: "Bài viết", href: "/articles" },
   { name: "Nghiên cứu", href: "/research" },
   { name: "Chuyên gia", href: "/experts" },
-  { name: "Giới thiệu", href: "/about" },
+  // { name: "Giới thiệu", href: "/about" },
 ];
 
 export const handleWait = () => {
@@ -207,25 +207,25 @@ function LogoutButton({
     if (onClick) onClick();
   };
 
-  return (
-    <button
-      onClick={handleLogout}
-      className={
-        mobile
-          ? "-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-          : ""
-      }
-    >
-      {mobile ? (
-        "Đăng xuất"
-      ) : (
-        <Button variant="outline" className="flex items-center gap-2">
-          <LogOut className="h-4 w-4" />
-          Đăng xuất
-        </Button>
-      )}
-    </button>
-  );
+  // return (
+  //   <button
+  //     onClick={handleLogout}
+  //     className={
+  //       mobile
+  //         ? "-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+  //         : ""
+  //     }
+  //   >
+  //     {mobile ? (
+  //       "Đăng xuất"
+  //     ) : (
+  //       <Button variant="outline" className="flex items-center gap-2">
+  //         <LogOut className="h-4 w-4" />
+  //         Đăng xuất
+  //       </Button>
+  //     )}
+  //   </button>
+  // );
 }
 
 export default function Header() {
