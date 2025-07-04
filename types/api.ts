@@ -1,4 +1,4 @@
-export interface HerbResponse<T> {
+export interface HerbResponse<T = any> {
   code: number;
   message?: string;
   data?: T;

@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  basePath: '/duoclieu',
+  basePath: "/duoclieu",
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -12,7 +12,14 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "http",
-        hostname: "**",
+        hostname: "localhost",
+        port: "8081",
+        pathname: "/api/files/**",
+      },
+      {
+        protocol: "https",
+        hostname: "ext.vnua.edu.vn",
+        pathname: "/spring_herb/herb/**",
       },
       {
         protocol: "https",

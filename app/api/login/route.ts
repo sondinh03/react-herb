@@ -7,6 +7,7 @@ export async function POST(request: NextRequest) {
 
     // 1. Check environment variable
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    console.log("apiUrl", apiUrl);
     if (!apiUrl) {
       console.error("NEXT_PUBLIC_API_URL is not configured");
       return NextResponse.json(AUTH_ERRORS.SYSTEM_ERROR, {

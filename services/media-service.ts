@@ -1,4 +1,6 @@
 import type { MediaResponse } from "@/app/types/media";
+import { fetchApi } from "@/lib/api-client";
+import { HerbResponse } from "@/types/api";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -19,7 +21,7 @@ export async function uploadMedia(
   file: File,
   altText?: string,
   plantId?: number
-): Promise<ApiResponse<MediaResponse>> {
+): Promise<HerbResponse<MediaResponse>> {
   try {
     const token = localStorage.getItem("accessToken");
     if (!token) {
@@ -69,6 +71,7 @@ export async function uploadMedia(
   }
 }
 
+
 /**
  * Get media by ID
  * @param id Media ID
@@ -78,7 +81,7 @@ export async function uploadMedia(
 export async function getMediaById(
   id: number,
   signal?: AbortSignal
-): Promise<ApiResponse<MediaResponse>> {
+): Promise<HerbResponse<MediaResponse>> {
   try {
     const token = localStorage.getItem("accessToken");
     const headers: HeadersInit = {
@@ -91,18 +94,15 @@ export async function getMediaById(
 
     console.log(`🚀 Fetching media ${id}...`);
 
-    const response = await fetch(`/api/media/${id}`, {
+    const result = await fetchApi<MediaResponse>(`/api/media/${id}`, {
       headers,
       signal,
     });
 
-    if (!response.ok) {
-      throw new Error(`Không thể lấy thông tin media: ${response.status}`);
-    }
-
-    return await response.json();
+    console.log(`✅ Media ${id} fetched successfully`);
+    return result;
   } catch (error: any) {
-    console.error(`💥 Error fetching media ${id}:`, {
+    console.error(`💥 Error fetching media: ${id}`, {
       name: error.name,
       message: error.message,
       aborted: signal?.aborted,

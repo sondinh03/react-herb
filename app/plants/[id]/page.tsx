@@ -15,8 +15,9 @@ import {
   FlaskRoundIcon as Flask,
   Map,
   ImageIcon,
+  BookIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { MediaViewer } from "@/components/media/media-viewer";
 import { Plant } from "@/app/types/plant";
@@ -33,13 +34,17 @@ import {
 import { Spinner } from "@/components/spinner";
 import { BackButton } from "@/components/BackButton";
 import { handleWait } from "@/components/header";
+import React from "react";
+import { fetchExternalImage } from "next/dist/server/image-optimizer";
 
 export default function PlantDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const plantId = params.id;
+  const resolvedParams = use(params);
+  const plantId = resolvedParams.id;
+
   const [plant, setPlant] = useState<Plant | null>(null);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isPlantLoading, setIsPlantLoading] = useState(true);
@@ -51,49 +56,107 @@ export default function PlantDetailPage({
     null
   );
 
+  const isMountedRef = useRef(true);
+  const abortControllersRef = useRef<Set<AbortController>>(new Set());
+
+  const createAbortController = useCallback(() => {
+    const controller = new AbortController();
+    abortControllersRef.current.add(controller);
+    return controller;
+  }, []);
+
+  const cleanupAbortController = useCallback((controller: AbortController) => {
+    abortControllersRef.current.delete(controller);
+  }, []);
+
+  const safeSetState = useCallback((stateSetter: () => void) => {
+    if (isMountedRef.current) {
+      stateSetter();
+    }
+  }, []);
+
   // Fetch plant details
   const fetchPlantDetails = async () => {
+    const controller = createAbortController();
+
     setIsPlantLoading(true);
     setError(null);
 
     try {
-      const id = plantId;
-      const result = await fetchApi<Plant>(`/api/plants/${id}`);
-      setPlant(result.data || null);
+      safeSetState(() => {
+        setIsPlantLoading(true);
+        setError(null);
+      });
+
+      const result = await fetchApi<Plant>(`/api/plants/${plantId}`, {
+        signal: controller.signal,
+      });
+
+      if (!isMountedRef.current) return;
+
+      if (result.success && result.data) {
+        // safeSetState(() => setPlant(result.data));
+        setPlant(result.data || []);
+      } else {
+        throw new Error(
+          result.message || "Không thể lấy thông tin cây dược liệu"
+        );
+      }
     } catch (err: any) {
-      setError(err.message || "Không thể lấy thông tin cây dược liệu");
+      if (!isMountedRef.current) return;
+
+      if (err.name === "AbortError") {
+        console.log("Plant fetch aborted");
+        return;
+      }
+
+      const errorMessage =
+        err.message || "Không thể lấy thông tin cây dược liệu";
+
+      safeSetState(() => setError(errorMessage));
+
       toast({
         title: "Lỗi",
-        description: err.message || "Không thể lấy thông tin cây dược liệu",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
-      setIsPlantLoading(false);
+      cleanupAbortController(controller);
+      safeSetState(() => setIsPlantLoading(false));
     }
   };
 
-  // Fetch media IDs with improved error handling and timeout
-  const fetchMediaIds = async () => {
+  const fetchMediaIds = useCallback(async () => {
     if (!plantId) {
-      setMediaItems([]);
-      setIsMediaLoading(false);
+      safeSetState(() => {
+        setMediaItems([]);
+        setIsMediaLoading(false);
+      });
       return;
     }
 
-    setIsMediaLoading(true);
+    const controller = createAbortController();
+    let timeoutId: NodeJS.Timeout;
+
     try {
-      // Create a controller for request abortion
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+      safeSetState(() => setIsMediaLoading(true));
+
+      timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 5000);
 
       const result = await fetchApi<{ data: string[] }>(
         `/api/plants/${plantId}/media-ids`,
-        { signal: controller.signal }
+        {
+          signal: controller.signal,
+        }
       );
 
       clearTimeout(timeoutId);
 
-      if (result.code == 200 && result.data) {
+      if (!isMountedRef.current) return;
+
+      if (result.code === 200 && result.data) {
         const mediaIds = Array.isArray(result.data) ? result.data : [];
         const items: MediaItem[] = mediaIds.map(
           (id: string, index: number) => ({
@@ -103,31 +166,45 @@ export default function PlantDetailPage({
           })
         );
 
-        // Fallback to plant.images if mediaIds is empty and images exist
         if (items.length === 0 && plant?.images?.length) {
           createFallbackMediaItems();
         } else {
-          setMediaItems(items);
+          safeSetState(() => setMediaItems(items));
         }
       } else {
         throw new Error(result.message || "Không thể tải danh sách hình ảnh");
       }
     } catch (error: any) {
-      console.error("fetchMediaIds error:", error);
-      if (error.name !== "AbortError") {
-        toast({
-          title: "Lỗi",
-          description: error.message || "Không thể tải danh sách hình ảnh",
-          variant: "destructive",
-        });
+      if (!isMountedRef.current) return;
 
-        // Fallback to plant.images on error if available
-        createFallbackMediaItems();
+      if (timeoutId) clearTimeout(timeoutId);
+
+      if (error.name === "AbortError") {
+        console.log("Media fetch aborted");
+        return;
       }
+
+      console.error("fetchMediaIds error:", error);
+
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể tải danh sách hình ảnh",
+        variant: "destructive",
+      });
+
+      // Fallback to plant.images on error if available
+      createFallbackMediaItems();
     } finally {
-      setIsMediaLoading(false);
+      cleanupAbortController(controller);
+      safeSetState(() => setIsMediaLoading(false));
     }
-  };
+  }, [
+    plantId,
+    plant,
+    createAbortController,
+    cleanupAbortController,
+    safeSetState,
+  ]);
 
   // Helper function to create fallback media items
   const createFallbackMediaItems = () => {
@@ -259,22 +336,14 @@ export default function PlantDetailPage({
                 <Share2 className="h-4 w-4" />
                 <span className="sr-only">Chia sẻ</span>
               </Button>
-              <Button variant="outline" size="icon"  onClick={handleWait}>
+              <Button variant="outline" size="icon" onClick={handleWait}>
                 <Printer className="h-4 w-4" />
                 <span className="sr-only">In</span>
               </Button>
-              <Button variant="outline" size="icon"  onClick={handleWait}>
+              <Button variant="outline" size="icon" onClick={handleWait}>
                 <Download className="h-4 w-4" />
                 <span className="sr-only">Tải xuống</span>
               </Button>
-              {/* <Button variant="outline" className="flex items-center gap-2">
-                <Edit className="h-4 w-4" />
-                Sửa
-              </Button>
-              <Button variant="destructive" className="flex items-center gap-2">
-                <Trash2 className="h-4 w-4" />
-                Xóa
-              </Button> */}
             </div>
           </div>
 
@@ -310,9 +379,11 @@ export default function PlantDetailPage({
                     <p>
                       <span className="font-medium">Họ:</span> {plant.family}
                     </p>
-                    <p>
-                      <span className="font-medium">Chi:</span> {plant.genus}
-                    </p>
+                    {plant.genus && (
+                      <p>
+                        <span className="font-medium">Chi:</span> {plant.genus}
+                      </p>
+                    )}
                     <p>
                       <span className="font-medium">Tên khác:</span>{" "}
                       {plant.otherNames}
@@ -327,21 +398,31 @@ export default function PlantDetailPage({
                   <p className="text-gray-700">
                     {plant.botanicalCharacteristics}
                   </p>
-                  <p className="text-gray-700">
-                    <strong>Thân:</strong> {plant.stem}
-                  </p>
-                  <p className="text-gray-700">
-                    <strong>Lá:</strong> {plant.leaves}
-                  </p>
-                  <p className="text-gray-700">
-                    <strong>Hoa:</strong> {plant.flowers}
-                  </p>
-                  <p className="text-gray-700">
-                    <strong>Quả:</strong> {plant.fruits}
-                  </p>
-                  <p className="text-gray-700">
-                    <strong>Rễ:</strong> {plant.roots}
-                  </p>
+                  {plant.stemDescription && (
+                    <p className="text-gray-700">
+                      <strong>Thân:</strong> {plant.stemDescription}
+                    </p>
+                  )}
+                  {plant.leafDescription && (
+                    <p className="text-gray-700">
+                      <strong>Lá:</strong> {plant.leafDescription}
+                    </p>
+                  )}
+                  {plant.flowerDescription && (
+                    <p className="text-gray-700">
+                      <strong>Hoa:</strong> {plant.flowerDescription}
+                    </p>
+                  )}
+                  {plant.fruitDescription && (
+                    <p className="text-gray-700">
+                      <strong>Quả:</strong> {plant.fruitDescription}
+                    </p>
+                  )}
+                  {plant.rootDescription && (
+                    <p className="text-gray-700">
+                      <strong>Rễ:</strong> {plant.rootDescription}
+                    </p>
+                  )}
                   <p className="text-gray-700">
                     <strong>Bộ phận dùng:</strong> {plant.partsUsed}
                   </p>
@@ -379,11 +460,12 @@ export default function PlantDetailPage({
           </div>
 
           <Tabs defaultValue="cong-dung" className="mt-8">
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-4">
+            <TabsList className="grid grid-cols-2 md:grid-cols-5 mb-4">
               <TabsTrigger value="cong-dung">Công dụng</TabsTrigger>
               <TabsTrigger value="cach-dung">Cách dùng</TabsTrigger>
               <TabsTrigger value="nghien-cuu">Nghiên cứu</TabsTrigger>
               <TabsTrigger value="bai-viet">Bài viết liên quan</TabsTrigger>
+              <TabsTrigger value="nguon">Nguồn tham khảo</TabsTrigger>
             </TabsList>
 
             <TabsContent value="cong-dung" className="space-y-4">
@@ -432,6 +514,34 @@ export default function PlantDetailPage({
                   <Button variant="outline">Xem thêm bài viết</Button>
                 </Link>
               </div>
+            </TabsContent>
+
+            <TabsContent value="nguon" className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center">
+                <BookIcon className="h-5 w-5 mr-2 text-green-600" />
+                Nguồn thông tin tham khảo
+              </h3>
+              {plant.dataSourceId ? (
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="border-l-4 border-green-500 pl-4">
+                    <p className="text-gray-700 leading-relaxed">
+                      <span className="font-medium">{plant.sourceAuthor}</span>{" "}
+                      ({plant.sourcePublicationYear}).{" "}
+                      <em>{plant.sourceName}</em>. {plant.sourcePublisher}.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-lg p-6 text-center">
+                  <BookIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500">
+                    Chưa có nguồn thông tin tham khảo được cung cấp.
+                  </p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Vui lòng liên hệ quản trị viên để bổ sung thông tin.
+                  </p>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
 
