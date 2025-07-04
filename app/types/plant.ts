@@ -14,11 +14,6 @@ export interface Plant {
   harvestSeason: string;
   status: number; // 0: draft, 1: published, 2: pending
   botanicalCharacteristics: string;
-  stem: string;
-  leaves: string;
-  flowers: string;
-  fruits: string;
-  roots: string;
   chemicalComposition: string;
   ecology: string;
   medicinalUses: string;
@@ -33,6 +28,19 @@ export interface Plant {
   images?: string[]; // Thêm trường images để quản lý hình ảnh
   category?: string; // Thêm trường category
   diseaseId?: number;
+  stemDescription?: string;
+  leafDescription?: string;
+  flowerDescription?: string;
+  fruitDescription?: string;
+  rootDescription?: string;
+  activeCompoundId: number;
+  activeCompoundDescription?: string;
+  dataSourceId: number;
+  sourceName?: string;
+  sourceAuthor?: string;
+  sourcePublisher?: string;
+  sourcePublicationYear?: number;
+  sourceType: string;
 }
 
 // Enum cho Status

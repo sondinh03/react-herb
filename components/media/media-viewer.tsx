@@ -100,11 +100,11 @@ class MediaCache {
 const mediaCache = new MediaCache();
 
 // Cleanup expired cache entries every 5 minutes
-if (typeof window !== "undefined") {
-  setInterval(() => {
-    mediaCache.cleanup();
-  }, 5 * 60 * 1000);
-}
+// if (typeof window !== "undefined") {
+//   setInterval(() => {
+//     mediaCache.cleanup();
+//   }, 5 * 60 * 1000);
+// }
 
 // Loading states enum for better state management
 enum LoadingState {
@@ -225,7 +225,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
   onLoad,
   onError,
   priority = false,
-  placeholder = "/placeholder.svg",
+  placeholder = "/duoclieu/placeholder.svg",
   errorFallback,
 }) => {
   // ==================== STATE MANAGEMENT ====================
@@ -280,12 +280,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
 
             if (!isMountedRef.current) return null;
 
-            // if (response.code === 200 && response.data) {
-            if (response.code === 200 && response.data) {
-              return response.data;
-            } else {
-              throw new Error(response.message || "Không thể tải media");
-            }
+            return response.data;
           } catch (err) {
             clearTimeout(timeoutId);
             throw err;
@@ -329,7 +324,20 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
     }
   }, [fetchMedia, retryCount]);
 
+  const onLoadRef = useRef(onLoad);
+  useEffect(() => {
+    onLoadRef.current = onLoad;
+  });
+
   // ==================== EFFECTS ====================
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      mediaCache.cleanup();
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -339,7 +347,6 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
       if (cachedMedia) {
         setMedia(cachedMedia);
         setLoadingState(LoadingState.SUCCESS);
-        if (onLoad) onLoad(cachedMedia);
         return;
       }
     }
@@ -356,7 +363,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
         abortControllerRef.current.abort();
       }
     };
-  }, [mediaId, fetchMedia, onLoad]);
+  }, [mediaId, fetchMedia]);
 
   // ==================== RENDER LOGIC ====================
   if (loadingState === LoadingState.LOADING && showLoader) {
