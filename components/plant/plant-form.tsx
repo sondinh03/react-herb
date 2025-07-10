@@ -27,16 +27,20 @@ import { useRouter } from "next/navigation";
 import { PlantMediaContainer } from "./plant-media-container";
 import { DiseasesResponse } from "@/app/types/diseases";
 import { fetchApi } from "@/lib/api-client";
-import { Page } from "@/types/api";
+import { HerbResponse, Page } from "@/types/api";
 import { DiseaseSelector } from "../diseases/diseases-selector";
 import { PLANT_STATUS_OPTIONS } from "@/constants/plant";
 import { toast } from "@/hooks/use-toast";
 import { CustomActionButton } from "../CustomActionButton";
+import { Family } from "@/app/types/families";
+import { Genera } from "@/app/types/genera";
+import { GenericSelector } from "../GenericSelector";
+import { ActiveCompoundResponse } from "@/app/types/activeCompound";
 
 interface PlantFormProps {
   plant: Plant;
   isLoading: boolean;
-  onSubmit: (plant: Plant, publish?: boolean) => Promise<void>;
+  onSubmit: (plant: Plant, publish?: boolean) => Promise<HerbResponse>;
   mode: "create" | "edit";
 }
 
@@ -48,7 +52,16 @@ export default function PlantForm({
 }: PlantFormProps) {
   const [formData, setFormData] = useState<Plant>(plant);
   const [diseases, setDiseases] = useState<DiseasesResponse[]>([]);
+  const [families, setFamilies] = useState<Family[]>([]);
+  const [genera, setGenera] = useState<Genera[]>([]);
+  const [activeCompounds, setActiveCompounds] = useState<
+    ActiveCompoundResponse[]
+  >([]);
   const [isLoadingDiseases, setIsLoadingDiseases] = useState(false);
+  const [isLoadingFamilies, setIsLoadingFamilies] = useState(false);
+  const [isLoadingGenera, setIsLoadingGenera] = useState(false);
+  const [isLoadingActiveCompounds, setIsLoadingActiveCompounds] =
+    useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -70,7 +83,64 @@ export default function PlantForm({
       }
     };
 
+    const fetchFamilies = async () => {
+      setIsLoadingFamilies(true);
+      try {
+        const result = await fetchApi<Page<Family>>(
+          "/api/families/search?sortField=name&sortDirection=asc"
+        );
+        setFamilies(result.data?.content || []);
+      } catch (error: any) {
+        toast({
+          title: "Lỗi",
+          description: error.message || "Không thể tải danh sách họ thực vật",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingFamilies(false);
+      }
+    };
+
+    const fetchGenera = async () => {
+      setIsLoadingGenera(true);
+      try {
+        const result = await fetchApi<Page<Genera>>(
+          "/api/genera/search?sortField=name&sortDirection=asc"
+        );
+        setGenera(result.data?.content || []);
+      } catch (error: any) {
+        toast({
+          title: "Lỗi",
+          description: error.message || "Không thể tải danh sách chi thực vật",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingGenera(false);
+      }
+    };
+
+    const fetchActiveCompounds = async () => {
+      setIsLoadingActiveCompounds(true);
+      try {
+        const result = await fetchApi<Page<ActiveCompoundResponse>>(
+          "/api/active-compound/search?sortField=name&sortDirection=asc"
+        );
+        setActiveCompounds(result.data?.content || []);
+      } catch (error: any) {
+        toast({
+          title: "Lỗi",
+          description: error.message || "Không thể tải danh sách hoạt chất",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingActiveCompounds(false);
+      }
+    };
+
     fetchDiseases();
+    fetchFamilies();
+    fetchGenera();
+    fetchActiveCompounds();
   }, []);
 
   const handleInputChange = (
@@ -90,6 +160,21 @@ export default function PlantForm({
         ...formData,
         [field]: value === "all" || !value ? undefined : Number.parseInt(value),
       });
+    } else if (field === "familyId") {
+      setFormData({
+        ...formData,
+        [field]: value === "all" || !value ? undefined : Number.parseInt(value),
+      });
+    } else if (field === "generaId") {
+      setFormData({
+        ...formData,
+        [field]: value === "all" || !value ? undefined : Number.parseInt(value),
+      });
+    } else if (field === "activeCompoundId") {
+      setFormData({
+        ...formData,
+        [field]: value === "all" || !value ? undefined : Number.parseInt(value),
+      });
     } else {
       setFormData({ ...formData, [field]: value });
     }
@@ -105,23 +190,35 @@ export default function PlantForm({
       true
     );
 
-    if (result.success && result.data && result.data.id) {
+    if (result.success && result.code === 200) {
       // Nếu có mediaIds và plant đã được tạo thành công, liên kết media với plant
-      if (formData.images && formData.images.length > 0) {
+      if (formData.images && formData.images.length > 0 && result.data?.id) {
         try {
           await linkMediaToPlant(result.data.id, formData.images.map(Number));
         } catch (error) {
           console.error("Error linking media to plant:", error);
-          // Không cần hiển thị lỗi này cho người dùng vì plant đã được tạo thành công
+          toast({
+          title: "Cảnh báo",
+          description: "Cây dược liệu đã được lưu nhưng có lỗi khi liên kết hình ảnh",
+          variant: "destructive",
+        });
+        return;
         }
       }
 
-      // Tiếp tục xử lý sau khi lưu thành công
       toast({
         title: "Thành công",
-        description: result.message,
+        description: result.message || "Thêm thành công",
       });
       router.push("/admin/plants");
+    } else {
+      toast({
+        title: "Lỗi",
+        description:
+          result?.message ||
+          "Lưu không thành công, vui lòng thử lại",
+        variant: "destructive",
+      });
     }
   };
 
@@ -194,21 +291,52 @@ export default function PlantForm({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="family">Họ</Label>
-                      <Input
-                        id="family"
-                        placeholder="Nhập họ thực vật"
-                        value={formData.family}
-                        onChange={handleInputChange}
-                      />
+                      {isLoadingFamilies ? (
+                        <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                      ) : (
+                        <GenericSelector
+                          value={formData.familyId?.toString() || "all"}
+                          onValueChange={(value) =>
+                            handleSelectChange("familyId", value)
+                          }
+                          items={families}
+                          isLoading={isLoadingFamilies}
+                          isSearching={false}
+                          searchPlaceholder="Tìm kiếm họ thực vật..."
+                          allOption={{
+                            value: "all",
+                            label: "Tất cả họ thực vật",
+                          }}
+                          noResultsText="Không tìm thấy họ thực vật"
+                          noDataText="Chưa có dữ liệu họ thực vật"
+                          loadingText="Đang tải danh sách họ thực vật..."
+                        />
+                      )}
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="genus">Chi</Label>
-                      <Input
-                        id="genus"
-                        placeholder="Nhập chi thực vật"
-                        value={formData.genus}
-                        onChange={handleInputChange}
-                      />
+                      {isLoadingGenera ? (
+                        <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                      ) : (
+                        <GenericSelector
+                          value={formData.generaId?.toString() || "all"}
+                          onValueChange={(value) =>
+                            handleSelectChange("generaId", value)
+                          }
+                          items={genera}
+                          isLoading={isLoadingGenera}
+                          isSearching={false}
+                          searchPlaceholder="Tìm kiếm chi thực vật..."
+                          allOption={{
+                            value: "all",
+                            label: "Tất cả chi thực vật",
+                          }}
+                          noResultsText="Không tìm thấy chi thực vật"
+                          noDataText="Chưa có dữ liệu chi thực vật"
+                          loadingText="Đang tải danh sách chi thực vật..."
+                        />
+                      )}
                     </div>
                   </div>
 
@@ -262,7 +390,6 @@ export default function PlantForm({
                       <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
                     ) : (
                       <DiseaseSelector
-                        // value={formData.diseaseId?.toString() || "all"}
                         value={formData.diseaseId || "all"}
                         onValueChange={(value) =>
                           handleSelectChange("diseaseId", value)
@@ -331,22 +458,22 @@ export default function PlantForm({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="stem">Thân</Label>
+                  <Label htmlFor="stemDescription">Thân</Label>
                   <Textarea
-                    id="stem"
+                    id="stemDescription"
                     placeholder="Mô tả về thân cây"
                     rows={3}
-                    value={formData.stem}
+                    value={formData.stemDescription}
                     onChange={handleInputChange}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="leaves">Lá</Label>
+                  <Label htmlFor="leafDescription">Lá</Label>
                   <Textarea
-                    id="leaves"
+                    id="leafDescription"
                     placeholder="Mô tả về lá cây"
                     rows={3}
-                    value={formData.leaves}
+                    value={formData.leafDescription}
                     onChange={handleInputChange}
                   />
                 </div>
@@ -354,22 +481,22 @@ export default function PlantForm({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="flowers">Hoa</Label>
+                  <Label htmlFor="flowerDescription">Hoa</Label>
                   <Textarea
-                    id="flowers"
+                    id="flowerDescription"
                     placeholder="Mô tả về hoa"
                     rows={3}
-                    value={formData.flowers}
+                    value={formData.flowerDescription}
                     onChange={handleInputChange}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="fruits">Quả/Hạt</Label>
+                  <Label htmlFor="fruitDescription">Quả/Hạt</Label>
                   <Textarea
-                    id="fruits"
+                    id="fruitDescription"
                     placeholder="Mô tả về quả/hạt"
                     rows={3}
-                    value={formData.fruits}
+                    value={formData.fruitDescription}
                     onChange={handleInputChange}
                   />
                 </div>
@@ -377,26 +504,36 @@ export default function PlantForm({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="roots">Rễ</Label>
+                  <Label htmlFor="rootDescription">Rễ</Label>
                   <Textarea
-                    id="roots"
+                    id="rootDescription"
                     placeholder="Mô tả về rễ cây"
                     rows={3}
-                    value={formData.roots}
+                    value={formData.rootDescription}
                     onChange={handleInputChange}
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="chemicalComposition">
-                    Thành phần hóa học
-                  </Label>
-                  <Textarea
-                    id="chemicalComposition"
-                    placeholder="Mô tả về thành phần hóa học"
-                    rows={3}
-                    value={formData.chemicalComposition}
-                    onChange={handleInputChange}
-                  />
+                  <Label htmlFor="activeCompoundId">Hoạt chất chính</Label>
+                  {isLoadingActiveCompounds ? (
+                    <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                  ) : (
+                    <GenericSelector
+                      value={formData.activeCompoundId?.toString() || "all"}
+                      onValueChange={(value) =>
+                        handleSelectChange("activeCompoundId", value)
+                      }
+                      items={activeCompounds}
+                      isLoading={isLoadingActiveCompounds}
+                      isSearching={false}
+                      searchPlaceholder="Tìm kiếm hoạt chất..."
+                      allOption={{ value: "all", label: "Tất cả hoạt chất" }}
+                      noResultsText="Không tìm thấy hoạt chất"
+                      noDataText="Chưa có dữ liệu hoạt chất"
+                      loadingText="Đang tải danh sách hoạt chất..."
+                    />
+                  )}
                 </div>
               </div>
 

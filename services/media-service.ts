@@ -1,6 +1,7 @@
 import type { MediaResponse } from "@/app/types/media";
 import { fetchApi } from "@/lib/api-client";
 import { HerbResponse } from "@/types/api";
+import { boolean } from "zod";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -71,7 +72,6 @@ export async function uploadMedia(
   }
 }
 
-
 /**
  * Get media by ID
  * @param id Media ID
@@ -136,28 +136,37 @@ export async function getMediaViewUrl(id: number): Promise<string> {
  * @param id Media ID
  * @returns Result of deletion
  */
-export async function deleteMedia(id: number): Promise<ApiResponse<void>> {
+export async function deleteMedia(id: number): Promise<HerbResponse<void>> {
   try {
     const token = localStorage.getItem("accessToken");
     if (!token) {
-      throw new Error("Không tìm thấy token xác thực");
+      return {
+        code: 401,
+        success: false,
+        message: "Không tìm thấy token xác thực",
+      };
     }
 
-    const response = await fetch(`/api/media/${id}`, {
+    const response = await fetchApi(`/api/media/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    if (!response.ok) {
-      throw new Error(`Không thể xóa media: ${response.status}`);
+    if (!response || typeof response.data !== 'boolean') {
+      return {
+        code: 500,
+        success: false,
+        message: "Phản hồi từ server không hợp lệ",
+      };
     }
 
-    return await response.json();
+    return response as HerbResponse<void>;
   } catch (error: any) {
     console.error("Error deleting media:", error);
     return {
+      code: 500,
       success: false,
       message: error.message || "Đã xảy ra lỗi khi xóa media",
     };

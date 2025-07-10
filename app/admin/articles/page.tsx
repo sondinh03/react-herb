@@ -60,6 +60,7 @@ import { StatusFilter } from "@/components/StatusFilter";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ARTICLE_STATUS_OPTIONS } from "@/constants/article";
 import { CustomActionButton } from "@/components/CustomActionButton";
+import { basePath } from "../plants/page";
 
 interface Article {
   id: number;
@@ -90,7 +91,7 @@ export default function AdminArticlesPage() {
     handlePageSizeChange,
     handleFilterChange,
   } = useDataSearch<Article>({
-    apiEndpoint: "/api/articles/search",
+    apiEndpoint: `${basePath}/api/articles/search`,
     initialParams: {
       pageIndex: 1,
       pageSize: 10,

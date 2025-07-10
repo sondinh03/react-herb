@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
     return handleApiSearchRequest(request, "/api/families/search", {
-        defaultPageSize: 20,
+        defaultPageSize: 12,
         requireAuth: false,
     });
 }

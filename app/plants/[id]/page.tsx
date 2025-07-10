@@ -36,6 +36,7 @@ import { BackButton } from "@/components/BackButton";
 import { handleWait } from "@/components/header";
 import React from "react";
 import { fetchExternalImage } from "next/dist/server/image-optimizer";
+import { create } from "lodash";
 
 export default function PlantDetailPage({
   params,
@@ -221,42 +222,66 @@ export default function PlantDetailPage({
   // Fetch related plants
   const fetchRelatedPlants = async () => {
     if (!plant?.familyId) {
-      setRelatedPlants([]);
-      setIsRelatedPlantsLoading(false);
+      safeSetState(() => {
+        setRelatedPlants([]);
+        setIsRelatedPlantsLoading(false);
+      });
       return;
     }
 
-    setIsRelatedPlantsLoading(true);
-    setRelatedPlantsError(null);
+    const controller = createAbortController();
+
+    safeSetState(() => {
+      setIsRelatedPlantsLoading(true);
+      setRelatedPlantsError(null);
+    });
 
     try {
       const queryParams = new URLSearchParams({
         pageIndex: "1",
         pageSize: "4",
-        [`filters[familyId]`]: plant.familyId.toString(),
-        sortField: "views",
-        sortDirection: "desc",
-        // [`filters[id][ne]`]: plant.id.toString(),
+        // [`filters[familyId]`]: plant.familyId.toString(),
+        "filters[familyId]": plant.familyId.toString(),
+        excludeId: plant.id.toString(),
+        // sortField: "views",
+        // sortDirection: "desc",
       });
 
-      const result = await fetchApi<HerbResponse<Plant[]>>(
-        `/api/plants/search?${queryParams}`
+      console.log("Generated URL: ", queryParams.toString());
+
+      const response = await fetchApi<HerbResponse<Plant[]>>(
+        `/api/plants/search?${queryParams}`,
+        { signal: controller.signal }
       );
 
-      if (result.code == 200 || result.success) {
-        setRelatedPlants(result.data.content);
+      if (!isMountedRef.current) return; // Kiểm tra component còn mounted không
+
+      if (response.code == 200 || response.success) {
+        safeSetState(() => setRelatedPlants(response.data?.content));
+        console.log(relatedPlants)
       } else {
-        throw new Error(result.message || "Không thể tải cây liên quan");
+        throw new Error(response.message || "Không thể tải cây liên quan");
       }
     } catch (error: any) {
-      setRelatedPlantsError(error.message || "Không thể tải cây liên quan");
+      if (!isMountedRef.current) return;
+
+      if (error.name === "AbortError") {
+        console.log("Related plants fetch aborted");
+        return;
+      }
+
+      const errorMessage = error.message || "Không thể tải cây liên quan";
+
+      safeSetState(() => setRelatedPlantsError(errorMessage));
+
       toast({
         title: "Lỗi",
-        description: error.message || "Không thể tải cây liên quan",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
-      setIsRelatedPlantsLoading(false);
+      cleanupAbortController(controller);
+      safeSetState(() => setIsRelatedPlantsLoading(false));
     }
   };
 
@@ -431,9 +456,9 @@ export default function PlantDetailPage({
                 <div>
                   <h2 className="text-xl font-semibold mb-2 flex items-center">
                     <Flask className="h-5 w-5 mr-2 text-green-600" />
-                    Thành phần hóa học
+                    Hoạt chất chính
                   </h2>
-                  <p className="text-gray-700">{plant.chemicalComposition}</p>
+                  <p className="text-gray-700">{plant.activeCompound}</p>
                 </div>
 
                 <div>

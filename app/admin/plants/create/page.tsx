@@ -2,24 +2,25 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import PlantForm from "@/components/plant/plant-form";
 import { Plant, PlantStatus } from "@/app/types/plant";
 import { toast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/BackButton";
+import { useAuth } from "@/hooks/useAuth";
+import { fetchApi } from "@/lib/api-client";
+import { HerbResponse } from "@/types/api";
 
 export default function CreatePlantPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { getAuthToken } = useAuth();
 
   const initialPlant: Plant = {
     name: "",
     scientificName: "",
-    family: "",
-    genus: "",
+    familyId: 0,
+    generaId: 0,
     otherNames: "",
     partsUsed: "",
     description: "",
@@ -28,12 +29,11 @@ export default function CreatePlantPage() {
     harvestSeason: "",
     status: PlantStatus.DRAFT,
     botanicalCharacteristics: "",
-    stem: "",
-    leaves: "",
-    flowers: "",
-    fruits: "",
-    roots: "",
-    chemicalComposition: "",
+    stemDescription: "",
+    leafDescription: "",
+    flowerDescription: "",
+    fruitDescription: "",
+    rootDescription: "",
     ecology: "",
     medicinalUses: "",
     indications: "",
@@ -43,21 +43,20 @@ export default function CreatePlantPage() {
     sideEffects: "",
     featured: false,
     views: 0,
-    images: [
-      "/placeholder.svg?height=200&width=200&text=Ảnh+1",
-      "/placeholder.svg?height=200&width=200&text=Ảnh+2",
-    ],
+    images: [],
   };
 
-  const handleSubmit = async (plant: Plant, publish = false) => {
+  const handleSubmit = async (
+    plant: Plant,
+    publish = false
+  ): Promise<HerbResponse> => {
+    setLoading(true);
     try {
-      // Set plant status based on publish parameter
       if (publish) {
         plant.status = PlantStatus.PUBLISHED;
       }
 
-      // Get authentication token from local storage
-      const token = localStorage.getItem("accessToken");
+      const token = getAuthToken();
       if (!token) {
         throw new Error(
           "Không tìm thấy token xác thực. Vui lòng đăng nhập lại."
@@ -65,7 +64,7 @@ export default function CreatePlantPage() {
       }
 
       // Send API request to create plant
-      const response = await fetch("/api/admin/plants/create", {
+      const response = await fetchApi("/api/admin/plants/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -74,31 +73,36 @@ export default function CreatePlantPage() {
         body: JSON.stringify(plant),
       });
 
-      // Parse the response
-      const result = await response.json();
-
       // Handle the response based on success/failure
-      if (result.success) {
+      if (response.success) {
         toast({
           title: "Thành công",
-          description: result.message,
+          description: response.message,
         });
         router.push("/admin/plants");
+
+        return {
+          code: 200,
+          message: response.message || "Đã tạo cây dược liệu mới thành công",
+          data: response.data,
+          success: true,
+        };
       } else {
-        toast({
-          title: "Thất bại",
-          description: result.message || "Không thể thêm cây dược liệu",
-          variant: "destructive",
-        });
+        throw new Error(response.message || "Không thể thêm cây dược liệu");
       }
     } catch (error: any) {
-      // Handle any exceptions
       toast({
         title: "Lỗi",
         description:
           error.message || "Đã xảy ra lỗi khi thêm cây dược liệu mới",
         variant: "destructive",
       });
+
+      return {
+      code: 500,
+      message: error.message || "Đã xảy ra lỗi khi thêm cây dược liệu mới",
+      success: false
+    };
     } finally {
       setLoading(false);
     }

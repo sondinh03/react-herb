@@ -778,16 +778,7 @@ export default function ArticleDetailPage({
       {/* Hero Section */}
       <div className="relative bg-white shadow-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Back Button */}
-          <div className="mb-6">
-            <Link
-              href="/articles"
-              className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Quay lại</span>
-            </Link>
-          </div>
+          <BackButton href="/articles"></BackButton>
 
           {/* Article Header */}
           <div className="space-y-6">

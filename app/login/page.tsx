@@ -20,8 +20,6 @@ import { AUTH_ERRORS } from "../api/login/error-messages";
 import { ROLE_TYPES } from "@/constants/user";
 import { handleWait } from "@/components/header";
 import { fetchApi } from "@/lib/api-client";
-import { tree } from "next/dist/build/templates/app-page";
-import { error } from "console";
 
 interface LoginData {
   accessToken: string;

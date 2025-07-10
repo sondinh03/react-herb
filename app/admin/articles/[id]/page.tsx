@@ -17,6 +17,7 @@ import { useRouter, useParams } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { Spinner } from "@/components/spinner";
 import { BackButton } from "@/components/BackButton";
+import { fetchApi } from "@/lib/api-client";
 
 export interface Article {
   id: number;
@@ -65,16 +66,15 @@ export default function ArticleDetailPage() {
       try {
         const token = localStorage.getItem("accessToken");
 
-        const response = await fetch(`/api/articles/${articleId}`, {
+        const response = await fetchApi<Article>(`/api/articles/${articleId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (!response.ok) {
-          throw new Error("Không thể lấy thông tin bài viết");
+        if (response && response.data) {
+          setArticle(response.data);
         }
-        const data = await response.json();
-        setArticle(data.data);
+        
       } catch (err: any) {
         setError(err.message);
         toast({

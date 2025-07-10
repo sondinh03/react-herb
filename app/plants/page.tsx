@@ -27,10 +27,12 @@ import { MediaViewer } from "@/components/media/media-viewer";
 import { fetchApi } from "@/lib/api-client";
 import { GenericSelector } from "@/components/GenericSelector";
 import { Page, SearchParams } from "@/types/api";
-import { Plant } from "../types/plant";
+import { Plant, PlantStatus } from "../types/plant";
 import { DiseasesResponse } from "../types/diseases";
 import { PAGINATION } from "@/constants/pagination";
 import { ViewType } from "@/types/common";
+import { ActiveCompoundResponse } from "../types/activeCompound";
+import { PLANT_STATUS_OPTIONS } from "@/constants/plant";
 
 // ============================================================================
 // TYPE DEFINITIONS - Định nghĩa các interface và types
@@ -91,6 +93,7 @@ export default function PlantsPage() {
     sortDirection: searchParams.get("sortDirection") || "asc",
     filters: {
       diseaseId: searchParams.get("diseaseId") || "all",
+      activeCompoundId: searchParams.get("activeCompoundId") || "all",
       status: searchParams.get("status") || "all",
       createdBy: searchParams.get("createdBy") || "all",
     },
@@ -103,7 +106,10 @@ export default function PlantsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [viewType, setViewType] = useState<ViewType>("grid");
   const [diseases, setDiseases] = useState<DiseasesResponse[]>([]);
+
+  const [activeCompounds, setActiveCompounds] = useState<ActiveCompoundResponse[]>([]);
   const [isLoadingDiseases, setIsLoadingDiseases] = useState(false);
+  const [isLoadingActiveCompounds, SetIsLoadingActiveCompounds] = useState(false);
 
   // --------------------------------------------------------------------------
   // API FUNCTIONS - Các hàm gọi API
@@ -136,11 +142,11 @@ export default function PlantsPage() {
     }
   };
 
-  const fetchDiseases = async () => {
+  const fetchDiseases = async (pageSize: number = 50) => {
     setIsLoadingDiseases(true);
     try {
       const result = await fetchApi<Page<DiseasesResponse>>(
-        "/api/diseases/search"
+        `/api/diseases/search?pageSize=${pageSize}`
       );
       setDiseases(result.data?.content || []);
     } catch (error: any) {
@@ -151,6 +157,24 @@ export default function PlantsPage() {
       });
     } finally {
       setIsLoadingDiseases(false);
+    }
+  };
+
+  const fetchActiveCompounds = async (pageSize: number = 50) => {
+    SetIsLoadingActiveCompounds(true);
+    try {
+      const result = await fetchApi<Page<ActiveCompoundResponse>>(
+        `/api/active-compound/search?pageSize=${pageSize}`
+      );
+      setActiveCompounds(result.data?.content || []);
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể tải danh sách hoạt chất",
+        variant: "destructive",
+      });
+    } finally {
+      SetIsLoadingActiveCompounds(false);
     }
   };
 
@@ -195,6 +219,17 @@ export default function PlantsPage() {
       filters: {
         ...prev.filters,
         diseaseId: value === "all" ? "all" : value, // Giữ nguyên kiểu dữ liệu của value
+      },
+      pageIndex: 1,
+    }));
+  }, []);
+
+  const handleActiveCompoundChange = useCallback((value: string | number) => {
+    setSearchState((prev) => ({
+      ...prev,
+      filters: {
+        ...prev.filters,
+        activeCompoundId: value === "all" ? "all" : value,
       },
       pageIndex: 1,
     }));
@@ -296,6 +331,7 @@ export default function PlantsPage() {
 
   useEffect(() => {
     fetchDiseases();
+    fetchActiveCompounds();
   }, []);
 
   useEffect(() => {
@@ -306,6 +342,7 @@ export default function PlantsPage() {
     searchState.sortField,
     searchState.sortDirection,
     searchState.filters.diseaseId,
+    searchState.filters.activeCompoundId,
   ]);
 
   useEffect(() => {
@@ -337,11 +374,11 @@ export default function PlantsPage() {
       <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Search Input */}
-          <div className="col-span-1 md:col-span-7">
+          <div className="col-span-1 md:col-span-6">
             <div className="relative">
               <Input
                 type="text"
-                placeholder="Tìm kiếm cây dược liệu theo tên, hoạt chất, công dụng..."
+                placeholder="Tìm kiếm cây dược liệu theo tên, hoạt chất chính, công dụng..."
                 className="pr-16"
                 value={searchState.keyword}
                 onChange={handleKeywordChange}
@@ -369,7 +406,7 @@ export default function PlantsPage() {
           </div>
 
           {/* Disease Filter */}
-          <div className="col-span-1 md:col-span-3">
+          <div className="col-span-1 md:col-span-2">
             {isLoadingDiseases ? (
               <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
             ) : (
@@ -384,6 +421,26 @@ export default function PlantsPage() {
                 noResultsText="Không tìm thấy công dụng"
                 noDataText="Chưa có dữ liệu công dụng bệnh"
                 loadingText="Đang tải danh sách công dụng..."
+              />
+            )}
+          </div>
+
+          {/* ActiveCompound Filter */}
+          <div className="col-span-1 md:col-span-2">
+            {isLoadingActiveCompounds ? (
+              <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+            ) : (
+              <GenericSelector
+                value={searchState.filters.activeCompoundId || "all"}
+                onValueChange={handleActiveCompoundChange}
+                items={activeCompounds}
+                isLoading={isLoadingActiveCompounds}
+                isSearching={false}
+                searchPlaceholder="Tìm kiếm hoạt chất..."
+                allOption={{ value: "all", label: "Tất cả hoạt chất" }}
+                noResultsText="Không tìm thấy hoạt chất"
+                noDataText="Chưa có dữ liệu hoạt chất"
+                loadingText="Đang tải danh sách hoạt chất..."
               />
             )}
           </div>
@@ -409,10 +466,10 @@ export default function PlantsPage() {
         className="mb-8"
       >
         <div className="flex justify-between items-center">
-          <TabsList>
+          {/* <TabsList>
             <TabsTrigger value="grid">Lưới</TabsTrigger>
             <TabsTrigger value="list">Danh sách</TabsTrigger>
-          </TabsList>
+          </TabsList> */}
         </div>
         <TabsContent value="grid" className="mt-6">
           {isLoading ? (
@@ -509,7 +566,7 @@ export default function PlantsPage() {
             </div>
           )}
         </TabsContent>
-        <TabsContent value="list" className="mt-6">
+        {/* <TabsContent value="list" className="mt-6">
           {isLoading ? (
             <div className="space-y-4">
               {Array.from({ length: searchState.pageSize }).map((_, index) => (
@@ -628,7 +685,7 @@ export default function PlantsPage() {
               )}
             </div>
           )}
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
       {totalPages > 1 && (
         <Pagination
