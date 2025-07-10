@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { PlantMediaTab } from "./plant-media-tab";
 import { linkMediaToPlant } from "@/services/plant-media-service";
+import { fetchApi } from "@/lib/api-client";
 
 interface PlantMediaContainerProps {
   plantId: number;
@@ -26,33 +27,23 @@ export function PlantMediaContainer({ plantId }: PlantMediaContainerProps) {
       try {
         setIsLoading(true);
 
-        // const token = localStorage.getItem("accessToken");
-        // if (!token) {
-        //   throw new Error("Không tìm thấy token xác thực");
-        // }
-
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-        const response = await fetch(`/api/plants/${plantId}/media-ids`, {
-          // headers: {
-          //   Authorization: `Bearer ${token}`,
-          // },
+        const response = await fetchApi<number[]>(`/api/plants/${plantId}/media-ids`, {
           signal: controller.signal,
         });
 
         clearTimeout(timeoutId);
 
-        if (!response.ok) {
-          throw new Error(`Lỗi khi tải danh sách hình ảnh: ${response.status}`);
+        if (!response.success) {
+          throw new Error(`Lỗi khi tải danh sách hình ảnh: ${response.code}`);
         }
 
-        const result = await response.json();
-
-        if (result.success) {
-          setMediaIds(result.data || []);
+        if (response?.data) {
+          setMediaIds(response.data);
         } else {
-          throw new Error(result.message || "Không thể tải danh sách hình ảnh");
+          throw new Error(response.message || "Không thể tải danh sách hình ảnh");
         }
       } catch (error: any) {
         console.error("Lỗi khi tải danh sách hình ảnh:", error);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -11,6 +11,8 @@ import ArticleForm from "@/components/article/article-form"; // Giả định co
 import { Spinner } from "@/components/spinner"; // Giả định component Spinner
 import { Article } from "../../[id]/page";
 import { BackButton } from "@/components/BackButton";
+import { fetchApi } from "@/lib/api-client";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function EditArticlePage() {
   const router = useRouter();
@@ -21,40 +23,103 @@ export default function EditArticlePage() {
   const [loading, setLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const {getAuthToken} = useAuth();
+
+  // Check authentication
+  const checkAuth = useCallback(() => {
+    const token = getAuthToken();
+    if (!token) {
+      toast({
+        title: "Lỗi xác thực",
+        description: "Vui lòng đăng nhập để tiếp tục",
+        variant: "destructive",
+      });
+      router.push("/login");
+      return false;
+    }
+    return true;
+  }, [getAuthToken, router]);
 
   // Fetch dữ liệu từ API khi component mount
-  useEffect(() => {
-    const fetchArticleDetails = async () => {
-      setIsFetching(true);
-      try {
-        const token = localStorage.getItem("accessToken");
+  const fetchArticleDetails = useCallback(async () => {
+    if (!articleId || !checkAuth()) return;
 
-        const response = await fetch(`/api/articles/${articleId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!response.ok) {
-          throw new Error("Không thể lấy thông tin bài viết");
-        }
-        const data = await response.json();
-        setFormData(data.data); // Giả định API trả về { data: Article }
-      } catch (err: any) {
-        setError(err.message);
-        toast({
-          title: "Lỗi",
-          description: err.message,
-          variant: "destructive",
-        });
-      } finally {
-        setIsFetching(false);
+    setIsFetching(true);
+    setError(null);
+
+    try {
+      const token = getAuthToken();
+      const response = await fetchApi<Article>(`/api/articles/${articleId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response?.data) {
+        setFormData(response.data);
+      } else {
+        throw new Error("Không tìm thấy thông tin bài viết");
+      }
+    } catch (err: any) {
+      const errorMessage = err.message || "Có lỗi xảy ra khi tải bài viết";
+      setError(errorMessage);
+      toast({
+        title: "Lỗi",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetching(false);
+    }
+  }, [articleId, checkAuth, getAuthToken]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadData = async () => {
+      if (isMounted) {
+        await fetchArticleDetails();
       }
     };
 
-    if (articleId) {
-      fetchArticleDetails();
-    }
-  }, [articleId]);
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchArticleDetails]);
+
+  // useEffect(() => {
+  //   const fetchArticleDetails = async () => {
+  //     setIsFetching(true);
+  //     try {
+  //       const token = getAuthToken();
+
+  //       const response = await fetchApi<Article>(`/api/articles/${articleId}`, {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
+
+  //       if (response && response.data) {
+  //         setFormData(response.data);
+  //       }
+  //     } catch (err: any) {
+  //       setError(err.message);
+  //       toast({
+  //         title: "Lỗi",
+  //         description: err.message,
+  //         variant: "destructive",
+  //       });
+  //     } finally {
+  //       setIsFetching(false);
+  //     }
+  //   };
+
+  //   if (articleId) {
+  //     fetchArticleDetails();
+  //   }
+  // }, [articleId]);
 
   // Handler lưu thay đổi
   const handleSubmit = async (article: Article) => {
@@ -62,7 +127,7 @@ export default function EditArticlePage() {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const response = await fetch(`/api/admin/articles/edit/${articleId}`, {
+      const response = await fetchApi(`/api/admin/articles/edit/${articleId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -71,16 +136,14 @@ export default function EditArticlePage() {
         body: JSON.stringify(article),
       });
 
-      if (!response.ok) {
-        throw new Error("Không thể cập nhật bài viết");
+      if (response?.success) {
+        toast({
+          title: "Thành công",
+          description: "Đã cập nhật thông tin bài viết",
+          variant: "success",
+        });
+        router.push(`/admin/articles/${articleId}`); 
       }
-
-      toast({
-        title: "Thành công",
-        description: "Đã cập nhật thông tin bài viết",
-        variant: "success",
-      });
-      router.push(`/admin/articles/${articleId}`); // Quay lại chi tiết bài viết
     } catch (err: any) {
       setError(err.message);
       toast({

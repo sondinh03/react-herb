@@ -20,6 +20,7 @@ import { Plant } from "@/app/types/plant";
 import { getStatusLabel } from "@/constants/plant";
 import { Spinner } from "@/components/spinner";
 import { BackButton } from "@/components/BackButton";
+import { fetchApi } from "@/lib/api-client";
 /*
 interface Plant {
   id: number;
@@ -70,16 +71,15 @@ export default function PlantDetailPage() {
       try {
         const token = localStorage.getItem("accessToken");
 
-        const response = await fetch(`/api/plants/${plantId}`, {
+        const response = await fetchApi<Plant>(`/api/plants/${plantId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        if (!response.ok) {
-          throw new Error("Không thể lấy thông tin cây dược liệu");
+
+        if (response && response.data) {
+          setPlant(response.data);
         }
-        const data = await response.json();
-        setPlant(data.data);
       } catch (err: any) {
         setError(err.message);
         toast({

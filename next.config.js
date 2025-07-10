@@ -19,7 +19,7 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "ext.vnua.edu.vn",
-        pathname: "/spring_herb/herb/**",
+        pathname: "/spring_herb/**",
       },
       {
         protocol: "https",
@@ -27,6 +27,28 @@ const nextConfig = {
       },
     ],
     unoptimized: true,
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      canvas: false,
+    };
+
+    return config;
+  },
+
+  async headers() {
+    return [
+      {
+        source: "/pdf.worker.js",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "application/javascript",
+          },
+        ],
+      },
+    ];
   },
 };
 

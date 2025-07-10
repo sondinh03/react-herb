@@ -66,6 +66,7 @@ export interface SearchDto {
   sortField?: string;
   sortDirection?: string;
   filters?: Record<string, any>;
+  excludeId?: number;
 }
 
 // Parse filters from URL search params
@@ -152,6 +153,10 @@ export function extractSearchDto(request: NextRequest): SearchDto {
   const filters = parseFilters(searchParams);
   if (Object.keys(filters).length > 0) {
     searchDto.filters = filters;
+  }
+
+  if (searchParams.has("excludeId") && searchParams.get("excludeId") !== "") {
+    searchDto.excludeId = Number.parseInt(searchParams.get("excludeId")!, 10);
   }
 
   return searchDto;
@@ -325,7 +330,7 @@ export async function handleApiSearchRequest(
     }
 
     // Build API URL
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     const queryString = buildQueryString(searchDto);
     const fullUrl = `${apiUrl}${endpoint}?${queryString}`;
 
@@ -439,3 +444,155 @@ export const callApiPut = (
   successMessage: string,
   options?: { requireAuth?: boolean }
 ) => callApi(req, endpoint, "PUT", successMessage, options);
+
+export async function callApiBinary(
+  request: NextRequest,
+  endpoint: string,
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
+  options: {
+    requireAuth?: boolean;
+    contentType?: string;
+    contentDisposition?: string;
+  } = { requireAuth: true }
+): Promise<NextResponse> {
+  try {
+    if (request.method !== method && request.method !== "OPTIONS") {
+      return NextResponse.json(API_ERRORS.METHOD_NOT_ALLOWED, {
+        status: 405,
+        headers: { Allow: method },
+      });
+    }
+
+    // Xử lý yêu cầu OPTIONS cho CORS
+    if (request.method === "OPTIONS") {
+      return new NextResponse(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Methods": method,
+          "Access-Control-Allow-Headers": "Authorization, Content-Type",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    }
+
+    // Build API URL
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const fullUrl = `${apiUrl}${endpoint}`;
+
+    console.log("endpoint: ", endpoint);
+
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+
+    // Add authorization header if required
+    if (options.requireAuth !== false) {
+      const token = extractToken(request);
+      if (!token) {
+        return NextResponse.json(API_ERRORS.UNAUTHORIZED, { status: 401 });
+      }
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const requestOptions: RequestInit = {
+      method,
+      headers,
+    };
+
+    // Chỉ parse body cho POST, PUT, PATCH nếu có dữ liệu
+    if (["POST", "PUT", "PATCH"].includes(method)) {
+      const contentLength = request.headers.get("content-length");
+      if (contentLength && parseInt(contentLength) > 0) {
+        try {
+          const body = await request.json();
+          requestOptions.body = JSON.stringify(body);
+        } catch (error) {
+          return NextResponse.json(API_ERRORS.BAD_REQUEST, { status: 400 });
+        }
+      }
+    }
+
+    console.log(`Gọi API: ${method} ${fullUrl}`, { headers });
+
+    // Call the API
+    const response = await fetch(fullUrl, requestOptions);
+
+    if (!response.ok) {
+      const errorMapping: Record<number, any> = {
+        400: API_ERRORS.BAD_REQUEST,
+        401: API_ERRORS.UNAUTHORIZED,
+        403: API_ERRORS.FORBIDDEN,
+        404: API_ERRORS.NOT_FOUND,
+        500: API_ERRORS.SYSTEM_ERROR,
+      };
+
+      let errorMessage;
+      try {
+        const errorBody = await response.text();
+        if (errorBody.trim()) {
+          const parsedErrorBody = JSON.parse(errorBody);
+          errorMessage = parsedErrorBody.message;
+        }
+      } catch {
+        errorMessage = undefined;
+      }
+
+      const mappedError = errorMapping[response.status] || {
+        ...API_ERRORS.DEFAULT_ERROR,
+        code: response.status,
+      };
+
+      if (errorMessage) {
+        mappedError.message = errorMessage;
+      }
+
+      return NextResponse.json(mappedError, { status: response.status });
+    }
+
+    // Get the content type from the response
+    const contentType = response.headers.get("content-type") || options.contentType || "application/octet-stream";
+
+    // Get the binary data
+    const data = await response.arrayBuffer();
+
+    // Prepare response headers
+    const responseHeaders: HeadersInit = {
+      "Content-Type": contentType,
+    };
+
+    if (options.contentDisposition) {
+      responseHeaders["Content-Disposition"] = options.contentDisposition;
+    }
+
+    // Return the binary data with the correct content type
+    return new NextResponse(data, {
+      headers: responseHeaders,
+    });
+  } catch (error: any) {
+    console.error(
+      `Unexpected error in callApiBinary ${method} (${endpoint}):`,
+      error
+    );
+
+    if (error.name === "AbortError") {
+      return NextResponse.json(API_ERRORS.TIMEOUT_ERROR, {
+        status: API_ERRORS.TIMEOUT_ERROR.code,
+      });
+    }
+
+    return NextResponse.json(API_ERRORS.DEFAULT_ERROR, {
+      status: API_ERRORS.DEFAULT_ERROR.code,
+    });
+  }
+}
+
+// Helper function cho GET binary
+export const callApiBinaryGet = (
+  req: NextRequest,
+  endpoint: string,
+  options: {
+    requireAuth?: boolean;
+    contentType?: string;
+    contentDisposition?: string;
+  } = {}
+) => callApiBinary(req, endpoint, "GET", options);

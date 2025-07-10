@@ -37,16 +37,15 @@ import {
 import { Article } from "@/app/admin/articles/[id]/page";
 import { Textarea } from "../ui/textarea";
 import { PLANT_STATUS_OPTIONS } from "@/constants/plant";
-import { toast } from "@/components/ui/use-toast"; // Giả định có toast component
-import { uploadMedia } from "@/services/media-service";
 import MediaViewer from "../media/media-viewer";
+import RichTextEditor from "../RichTextEditor";
 
 interface ArticleFormProps {
   article: Article;
   isLoading: boolean;
   onSubmit: (article: Article) => void;
   mode: "edit" | "create";
-  onImageUpload?: (file: File) => Promise<string>; // Callback để xử lý upload ảnh
+  onImageUpload?: (file: File) => Promise<string>;
 }
 
 export default function ArticleForm({
@@ -72,6 +71,13 @@ export default function ArticleForm({
       [field]: value,
     }));
   };
+
+  const handleContentChange = useCallback((content: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      content: content,
+    }));
+  }, []);
 
   const handleOpenFileDialog = useCallback(() => {
     if (fileInputRef.current && !isUploadingImage) {
@@ -197,6 +203,25 @@ export default function ArticleForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Validate required fields
+    if (!formData.title?.trim()) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng nhập tiêu đề bài viết",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.content?.trim()) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng nhập nội dung bài viết",
+        variant: "destructive",
+      });
+      return;
+    }
+
     onSubmit(formData);
   };
 
@@ -227,7 +252,9 @@ export default function ArticleForm({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title">Tiêu đề bài viết</Label>
+                    <Label htmlFor="title">
+                      Tiêu đề bài viết <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="title"
                       value={formData.title || ""}
@@ -235,8 +262,10 @@ export default function ArticleForm({
                         handleInputChange("title", e.target.value)
                       }
                       placeholder="Nhập tiêu đề bài viết"
+                      required
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="excerpt">Tóm tắt</Label>
                     <Textarea
@@ -249,49 +278,22 @@ export default function ArticleForm({
                       rows={3}
                     />
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="content">Nội dung</Label>
-                    <div className="border rounded-md">
-                      <div className="flex items-center gap-1 p-2 border-b">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Bold className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Italic className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <LinkIcon className="h-4 w-4" />
-                        </Button>
-                        <div className="h-6 w-px bg-gray-200 mx-1"></div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <List className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <ListOrdered className="h-4 w-4" />
-                        </Button>
-                        <div className="h-6 w-px bg-gray-200 mx-1"></div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Image className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Code className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <Textarea
-                        id="content"
-                        value={formData.content || ""}
-                        onChange={(e) =>
-                          handleInputChange("content", e.target.value)
-                        }
-                        placeholder="Nhập nội dung chi tiết của bài viết..."
-                        rows={15}
-                        className="border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                      />
-                    </div>
+                    <Label htmlFor="content">
+                      Nội dung <span className="text-red-500">*</span>
+                    </Label>
+                    <RichTextEditor
+                      content={formData.content || ""}
+                      onChange={handleContentChange}
+                      placeholder="Nhập nội dung chi tiết của bài viết..."
+                      className="min-h-[400px]"
+                    />
                   </div>
                 </CardContent>
               </Card>
             </div>
+
             <div className="lg:col-span-1">
               <div className="space-y-6">
                 <Card>
@@ -370,6 +372,7 @@ export default function ArticleForm({
                     </div>
                   </CardContent>
                 </Card>
+
                 <Card>
                   <CardHeader>
                     <CardTitle>Xuất bản</CardTitle>
@@ -386,7 +389,7 @@ export default function ArticleForm({
                         Trạng thái
                       </Label>
                       <Select
-                        value={formData.status.toString()}
+                        value={formData.status?.toString() || 0}
                         onValueChange={(value) =>
                           handleSelectChange("status", value)
                         }
@@ -478,26 +481,68 @@ export default function ArticleForm({
                 <Label htmlFor="seoTitle">Tiêu đề SEO</Label>
                 <Input
                   id="seoTitle"
-                  value={formData.title || ""}
-                  onChange={(e) => handleInputChange("title", e.target.value)}
+                  value={formData.seoTitle || formData.title || ""}
+                  onChange={(e) =>
+                    handleInputChange("seoTitle", e.target.value)
+                  }
                   placeholder="Nhập tiêu đề SEO"
                 />
                 <p className="text-xs text-gray-500">
                   Tiêu đề hiển thị trên kết quả tìm kiếm (tối đa 60 ký tự)
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="seoDescription">Mô tả SEO</Label>
+                <Textarea
+                  id="seoDescription"
+                  value={formData.seoDescription || formData.excerpt || ""}
+                  onChange={(e) =>
+                    handleInputChange("seoDescription", e.target.value)
+                  }
+                  placeholder="Nhập mô tả SEO"
+                  rows={3}
+                />
+                <p className="text-xs text-gray-500">
+                  Mô tả hiển thị trên kết quả tìm kiếm (tối đa 160 ký tự)
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="seoKeywords">Từ khóa SEO</Label>
+                <Input
+                  id="seoKeywords"
+                  value={formData.seoKeywords || ""}
+                  onChange={(e) =>
+                    handleInputChange("seoKeywords", e.target.value)
+                  }
+                  placeholder="Nhập từ khóa, cách nhau bởi dấu phẩy"
+                />
+                <p className="text-xs text-gray-500">
+                  Các từ khóa liên quan đến bài viết, cách nhau bởi dấu phẩy
+                </p>
+              </div>
             </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button type="submit" disabled={isLoading}>
-                {mode === "edit" ? "Lưu thay đổi" : "Tạo bài viết"}
-              </Button>
-            </CardFooter>
           </Card>
         </TabsContent>
 
-        <div className="mt-6">
-          <Button type="submit" disabled={isLoading}>
-            {mode === "edit" ? "Lưu thay đổi" : "Tạo bài viết"}
+        {/* Submit Button */}
+        <div className="flex justify-end gap-4">
+          <Button type="button" variant="outline" disabled={isLoading}>
+            Hủy
+          </Button>
+          <Button type="submit" disabled={isLoading || isUploadingImage}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {mode === "edit" ? "Đang lưu..." : "Đang tạo..."}
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                {mode === "edit" ? "Lưu thay đổi" : "Tạo bài viết"}
+              </>
+            )}
           </Button>
         </div>
       </Tabs>

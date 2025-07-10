@@ -61,6 +61,8 @@ interface Plant {
   updatedAt: string;
 }
 
+export const basePath = process.env.NEXT_PUBLIC_BASE_PATH;
+
 export default function AdminPlantsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -79,7 +81,7 @@ export default function AdminPlantsPage() {
     handlePageSizeChange,
     handleFilterChange,
   } = useDataSearch<Plant>({
-    apiEndpoint: "/api/plants/search",
+    apiEndpoint: `${basePath}/api/plants/search`,
     initialParams: {
       pageIndex: 1,
       pageSize: 10,
@@ -240,28 +242,6 @@ export default function AdminPlantsPage() {
   const handleDeletePlant = (plantId: number) => {
     handleWait();
   };
-
-  // const handleApprovePlant = async (plantId: number) => {
-  //   handleWait();
-  //   setLoading(true);
-
-  //   try {
-  //     const token = localStorage.getItem("accessToken");
-
-  //     const response = await fetch(`/api/admin/plants/edit/${plantId}`, {
-  //       method: "PUT",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         "Authorization": `Bearer ${token}`,
-  //       },
-  //       body: JSON.stringify(plant),
-  //     });
-  //   } catch {
-
-  //   } finally {
-
-  //   }
-  // };
 
   // Handle row click
   const handleRowClick = (plant: Plant) => {

@@ -7,7 +7,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ success: false, message: "ID không hợp lệ" }, { status: 400 })
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081"
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL
 
     // Forward the request to the backend
     const response = await fetch(`${apiUrl}/api/media/view/${id}`)

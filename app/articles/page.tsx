@@ -222,19 +222,19 @@ export default function ArticlesPage() {
 
   const buildQueryParams = (state: SearchParams) => {
     const params = new URLSearchParams();
-    params.set("pageIndex", searchState.pageIndex.toString());
-    params.set("pageSize", searchState.pageSize.toString());
+    params.set("pageIndex", state.pageIndex.toString());
+    params.set("pageSize", state.pageSize.toString());
 
-    if (searchState.keyword) {
-      params.set("keyword", searchState.keyword);
+    if (state.keyword) {
+      params.set("keyword", state.keyword);
     }
 
-    if (searchState.sortField) {
-      params.set("sortField", searchState.sortField);
-      params.set("sortDirection", searchState.sortDirection);
+    if (state.sortField) {
+      params.set("sortField", state.sortField);
+      params.set("sortDirection", state.sortDirection);
     }
 
-    Object.entries(searchState.filters).forEach(([key, value]) => {
+    Object.entries(state.filters).forEach(([key, value]) => {
       if (value !== undefined && value !== "all") {
         params.set(`filters[${key}]`, value.toString());
       }
@@ -269,7 +269,7 @@ export default function ArticlesPage() {
         pageIndex: 1,
       }));
     }
-  }, [articles]);
+  }, [searchState.pageIndex]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -355,10 +355,10 @@ export default function ArticlesPage() {
         className="mb-8"
       >
         <div className="flex justify-between items-center">
-          <TabsList>
+          {/* <TabsList>
             <TabsTrigger value="grid">Lưới</TabsTrigger>
             <TabsTrigger value="list">Danh sách</TabsTrigger>
-          </TabsList>
+          </TabsList> */}
         </div>
 
         <TabsContent value="grid" className="mt-6">
@@ -618,6 +618,9 @@ export default function ArticlesPage() {
           pageSize={searchState.pageSize}
           onPageChange={handlePageChange}
           className="mt-12"
+          pageSizeOptions={[12, 24, 48]}
+          showPageSizeSelector={true}
+          onPageSizeChange={handlePageSizeChange}
         />
       )}
     </div>
