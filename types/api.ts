@@ -2,7 +2,7 @@ export interface HerbResponse<T = any> {
   code: number;
   message?: string;
   data?: T;
-  success?: boolean;
+  success: boolean;
 }
 
 // Interface cho phân trang (khớp với Page<T> trong backend)

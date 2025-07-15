@@ -327,7 +327,7 @@ export function PlantMediaTab({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label>Hình ảnh cây dược liệu</Label>
-              <Button
+              {/* <Button
                 type="button"
                 variant="outline"
                 size="sm"
@@ -346,7 +346,7 @@ export function PlantMediaTab({
                     Thêm ảnh
                   </>
                 )}
-              </Button>
+              </Button> */}
               <input
                 type="file"
                 ref={fileInputRef}
@@ -426,7 +426,7 @@ export function PlantMediaTab({
           </div>
 
           {/* Phần tài liệu */}
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <Label>Tài liệu đính kèm</Label>
 
             <div
@@ -497,7 +497,7 @@ export function PlantMediaTab({
                 ))}
               </div>
             )}
-          </div>
+          </div> */}
         </CardContent>
       </Card>
 

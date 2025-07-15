@@ -5,9 +5,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const diseaseId = params.id;
-  const endpoint = `/api/diseases/${diseaseId}`;
-  return callApiPut(request, endpoint, "Cập nhật công dụng thành công", {
+  return callApiPut(request, `/api/active-compound/${params.id}`, "Thành công", {
     requireAuth: false,
   });
 }

@@ -82,6 +82,15 @@ export async function getMediaById(
   id: number,
   signal?: AbortSignal
 ): Promise<HerbResponse<MediaResponse>> {
+  // Validate input
+  if (!id || id <= 0) {
+    return {
+      success: false,
+      code: 400,
+      message: "ID media không hợp lệ",
+    };
+  }
+
   try {
     const token = localStorage.getItem("accessToken");
     const headers: HeadersInit = {
@@ -107,6 +116,20 @@ export async function getMediaById(
       message: error.message,
       aborted: signal?.aborted,
     });
+
+    // Handle abort signal
+    if (signal?.aborted) {
+      return {
+        success: false,
+        code: 499,
+        message: "Request đã bị hủy",
+      };
+    }
+
+    // Nếu error từ fetchApi đã có structure HerbResponse
+    if (error.code && error.message) {
+      return error;
+    }
 
     return {
       success: false,
@@ -154,7 +177,7 @@ export async function deleteMedia(id: number): Promise<HerbResponse<void>> {
       },
     });
 
-    if (!response || typeof response.data !== 'boolean') {
+    if (!response || typeof response.data !== "boolean") {
       return {
         code: 500,
         success: false,

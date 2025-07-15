@@ -1,11 +1,13 @@
-export interface Genera {
+export interface GeneraResponse {
   id: number;
   name: string;
-  slug: string;
   description?: string;
+  familyId: number;
+  familyName: string;
 }
 
-export interface GeneraForm{
+export interface GeneraForm {
   name: string;
   description: string;
+  familyId: number;
 }

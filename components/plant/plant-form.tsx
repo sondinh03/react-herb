@@ -42,6 +42,7 @@ interface PlantFormProps {
   isLoading: boolean;
   onSubmit: (plant: Plant, publish?: boolean) => Promise<HerbResponse>;
   mode: "create" | "edit";
+  onChange?: (formData: Plant) => void;
 }
 
 export default function PlantForm({
@@ -49,6 +50,7 @@ export default function PlantForm({
   isLoading,
   onSubmit,
   mode,
+  onChange,
 }: PlantFormProps) {
   const [formData, setFormData] = useState<Plant>(plant);
   const [diseases, setDiseases] = useState<DiseasesResponse[]>([]);
@@ -247,7 +249,7 @@ export default function PlantForm({
       </div>
 
       <Tabs defaultValue="basic-info" className="space-y-6">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:w-[600px]">
+        <TabsList className="grid grid-cols-2 md:grid-cols-4">
           <TabsTrigger value="basic-info">Thông tin cơ bản</TabsTrigger>
           <TabsTrigger value="botanical-info">Đặc điểm thực vật</TabsTrigger>
           <TabsTrigger value="usage-info">Công dụng & Cách dùng</TabsTrigger>

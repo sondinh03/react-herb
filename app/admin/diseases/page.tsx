@@ -49,7 +49,7 @@ export default function DiseasesPage() {
     handlePageChange,
     handlePageSizeChange,
   } = useDataSearch<Disease>({
-    apiEndpoint: "/api/diseases/search",
+    apiEndpoint: `${process.env.NEXT_PUBLIC_BASE_PATH}/api/diseases/search`,
     initialParams: {
       pageIndex: 1,
       pageSize: 10,
