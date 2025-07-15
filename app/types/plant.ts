@@ -2,10 +2,10 @@ export interface Plant {
   id: number;
   name: string;
   scientificName: string;
-  // family: string;
+  family: string;
   familyId?: number;
   generaId?: number;
-  // genera: string;
+  genera: string;
   otherNames?: string;
   partsUsed?: string;
   description?: string;

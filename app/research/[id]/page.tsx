@@ -20,12 +20,18 @@ import { fetchApi } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
 import { ResolvedPos } from "@tiptap/pm/model";
 import { BackButton } from "@/components/BackButton";
-import dynamic from 'next/dynamic'
-
+import dynamic from "next/dynamic";
 
 const PDFViewer = dynamic(() => import("@/components/media/PDFViewer"), {
   ssr: false, // Tắt SSR để tránh lỗi DOMMatrix
 });
+
+const purchaseInfo = {
+  documentId: "doc123",
+  documentName: "Tài liệu học tập",
+  price: 50000,
+  currency: "VND",
+};
 
 export default function ResearchDetailPage({
   params,
@@ -38,9 +44,9 @@ export default function ResearchDetailPage({
   const [research, setResearch] = useState<Research | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const [showPDFPreview, setShowPDFPreview] = useState(true);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [isPaid] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -167,6 +173,14 @@ export default function ResearchDetailPage({
     fetchResearchDetail();
   }, [researchId]);
 
+  useEffect(() => {
+  if (research && research.downloadPrice === 0) {
+    setIsPaid(true);
+  } else {
+    setIsPaid(false); 
+  }
+}, [research]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -289,7 +303,7 @@ export default function ResearchDetailPage({
 
             {research.mediaUrl && (
               <div className="flex items-center gap-3">
-                <Button
+                {/* <Button
                   variant="outline"
                   size="sm"
                   onClick={handlePreviewPDF}
@@ -297,7 +311,7 @@ export default function ResearchDetailPage({
                 >
                   <EyeIcon className="h-4 w-4 mr-2" />
                   {isPreviewLoading ? "Đang tải..." : "Xem trước PDF"}
-                </Button>
+                </Button> */}
                 <Button
                   variant="outline"
                   size="sm"
@@ -339,19 +353,28 @@ export default function ResearchDetailPage({
                     <h2 className="text-xl font-bold text-gray-900">
                       Xem trước PDF
                     </h2>
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       size="sm"
                       onClick={handleClosePDFPreview}
                       className="h-8 w-8 p-0"
                     >
                       <X className="h-4 w-4" />
-                    </Button>
+                    </Button> */}
                   </div>
                   <PDFViewer
                     pdfUrl={`${baseUrl}${research.mediaUrl}`}
                     maxPreviewPages={research.previewPages}
+                    purchaseInfo={purchaseInfo}
                     isPaid={isPaid}
+                    onPurchaseSuccess={(documentId) => {
+                      // Xử lý khi thanh toán thành công
+                      console.log("Đã mua thành công:", documentId);
+                    }}
+                    onPurchaseError={(error) => {
+                      // Xử lý khi thanh toán thất bại
+                      console.error("Lỗi thanh toán:", error);
+                    }}
                     className="mb-8"
                   />
                 </CardContent>
@@ -363,5 +386,3 @@ export default function ResearchDetailPage({
     </div>
   );
 }
-
-

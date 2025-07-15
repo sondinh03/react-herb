@@ -76,14 +76,6 @@ export default function ResearchPage() {
             Các đề tài nghiên cứu về cây dược liệu ({totalElements} kết quả)
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleReset}>
-            Xóa bộ lọc
-          </Button>
-          <Button variant="outline" onClick={() => refetch()}>
-            Tải lại
-          </Button>
-        </div>
       </div>
 
       {/* Search and Filter */}
@@ -116,26 +108,6 @@ export default function ResearchPage() {
               )}
             </div>
           </div>
-          {/* <div>
-            {isLoadingYears ? (
-              <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
-            ) : (
-              <GenericSelector
-                value={searchState.filters.publishedYear || "all"}
-                onValueChange={(value) =>
-                  handleFilterChange("publishedYear", value)
-                }
-                items={years}
-                isLoading={isLoadingYears}
-                isSearching={false}
-                searchPlaceholder="Tìm kiếm năm..."
-                allOption={{ value: "all", label: "Tất cả năm" }}
-                noResultsText="Không tìm thấy năm"
-                noDataText="Chưa có dữ liệu năm"
-                loadingText="Đang tải danh sách năm..."
-              />
-            )}
-          </div> */}
         </form>
       </div>
 

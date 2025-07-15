@@ -79,13 +79,15 @@ interface Tag {
 }
 
 // Giả định các trạng thái nghiên cứu
-const RESEARCH_STATUS_OPTIONS = [
+export const RESEARCH_STATUS_OPTIONS = [
   { value: 1, label: "Bản nháp", variant: "warning" },
   { value: 2, label: "Chờ duyệt", variant: "secondary" },
   { value: 3, label: "Đã xuất bản", variant: "success" },
   { value: 4, label: "Lưu trữ", variant: "secondary" },
   { value: 5, label: "Từ chối", variant: "destructive" },
 ];
+
+export const basePath = process.env.NEXT_PUBLIC_BASE_PATH;
 
 export default function AdminResearchPage() {
   const router = useRouter();
@@ -103,10 +105,10 @@ export default function AdminResearchPage() {
     handlePageSizeChange,
     handleFilterChange,
   } = useDataSearch<Research>({
-    apiEndpoint: "/api/research/search",
+    apiEndpoint: `${basePath}/api/research/search`,
     initialParams: {
       pageIndex: 1,
-      pageSize: 10,
+      pageSize: 12,
     },
     requireAuth: true,
   });

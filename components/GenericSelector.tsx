@@ -36,6 +36,8 @@ interface GenericSelectorProps<T extends Item> {
   loadingText?: string;
   debounceTime?: number;
   maxDisplayItems?: number;
+  placeholder?: string;
+  disabled?: boolean;
 }
 
 export function GenericSelector<T extends Item>({
@@ -51,6 +53,8 @@ export function GenericSelector<T extends Item>({
   loadingText = "Đang tải...",
   debounceTime = 300,
   maxDisplayItems = 100,
+  placeholder = "Chọn mục",
+  disabled = false,
 }: GenericSelectorProps<T>) {
   const [filteredItems, setFilteredItems] = useState<T[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -64,14 +68,23 @@ export function GenericSelector<T extends Item>({
     debouncedSearchRef.current = debounce(
       (keyword: string, itemsToFilter: T[]) => {
         if (keyword.trim() === "") {
-          setFilteredItems(itemsToFilter);
+          setFilteredItems(itemsToFilter.slice(0, maxDisplayItems));
         } else {
           const normalized = keyword.toLowerCase().trim();
           const filtered = itemsToFilter
-            .filter(
-              (item): item is T =>
-                item.id !== undefined && item.name !== undefined
-            )
+            .filter((item) => {
+              return (
+                item &&
+                typeof item === "object" &&
+                "id" in item &&
+                "name" in item &&
+                item.id !== null &&
+                item.id !== undefined &&
+                item.name !== null &&
+                item.name !== undefined &&
+                typeof item.name === "string"
+              );
+            })
             .filter((item) => item.name.toLowerCase().includes(normalized))
             .slice(0, maxDisplayItems);
 
@@ -90,14 +103,24 @@ export function GenericSelector<T extends Item>({
 
   // Cập nhật danh sách đã lọc khi items thay đổi
   useEffect(() => {
-    const validItems = items.filter(
-      (item): item is T => item.id !== undefined && item.name !== undefined
-    );
-    setFilteredItems(validItems.slice(0, maxDisplayItems));
+    const validItems = items.filter((item) => {
+      return (
+        item &&
+        typeof item === 'object' &&
+        'id' in item &&
+        'name' in item &&
+        item.id !== null &&
+        item.id !== undefined &&
+        item.name !== null &&
+        item.name !== undefined &&
+        typeof item.name === 'string'
+      );
+    });
 
-    // Áp dụng lại tìm kiếm nếu có từ khóa
     if (searchKeyword) {
       debouncedSearchRef.current?.(searchKeyword, validItems);
+    } else {
+      setFilteredItems(validItems.slice(0, maxDisplayItems));
     }
   }, [items, maxDisplayItems, searchKeyword]);
 
@@ -108,8 +131,22 @@ export function GenericSelector<T extends Item>({
       setSearchKeyword(keyword);
       setHasSearched(false);
 
+      const validItems = items.filter((item) => {
+        return (
+          item &&
+          typeof item === 'object' &&
+          'id' in item &&
+          'name' in item &&
+          item.id !== null &&
+          item.id !== undefined &&
+          item.name !== null &&
+          item.name !== undefined &&
+          typeof item.name === 'string'
+        );
+      });
+
       if (debouncedSearchRef.current) {
-        debouncedSearchRef.current(keyword, items);
+        debouncedSearchRef.current(keyword, validItems);
       }
     },
     [items]
@@ -136,17 +173,102 @@ export function GenericSelector<T extends Item>({
     return null;
   };
 
+  const handleValueChange = useCallback(
+    (val: string) => {
+      if (val === "all" || val === "") {
+        onValueChange(val);
+      } else {
+        const numericValue = Number(val);
+        if (!isNaN(numericValue)) {
+          onValueChange(numericValue);
+        } else {
+          onValueChange(val);
+        }
+      }
+    },
+    [onValueChange]
+  );
+
+  const getDisplayValue = () => {
+    if (value === "all" || value === "") {
+      return allOption?.label || placeholder;
+    }
+
+    const selectedItem = items.find(
+      (item) => item && (item.id === value || item.id === Number(value))
+    );
+
+    return selectedItem?.name || placeholder;
+  };
+
+  // return (
+  //   <Select
+  //     value={String(value)}
+  //     onValueChange={handleValueChange}
+  //     disabled={disabled || isLoading}
+  //   >
+  //     <SelectTrigger className="w-full">
+  //       <SelectValue placeholder={placeholder}>
+  //         {getDisplayValue()}
+  //       </SelectValue>
+  //     </SelectTrigger>
+  //     <SelectContent>
+  //       <div className="px-2 py-1 sticky top-0 bg-background z-10">
+  //         <div className="relative">
+  //           <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+  //             {isSearching ? (
+  //               <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+  //             ) : (
+  //               <Search className="h-4 w-4 text-muted-foreground" />
+  //             )}
+  //           </div>
+  //           <Input
+  //             type="text"
+  //             placeholder={searchPlaceholder}
+  //             className="pl-8 text-sm h-8"
+  //             value={searchKeyword}
+  //             onChange={handleSearchChange}
+  //             disabled={isLoading}
+  //           />
+  //         </div>
+  //       </div>
+
+  //       {allOption && (
+  //         <SelectItem value={allOption.value.toString()}>
+  //           {allOption.label}
+  //         </SelectItem>
+  //       )}
+
+  //       {isLoading || isSearching || filteredItems.length === 0 ? (
+  //         <div className="text-center py-2 text-sm text-muted-foreground">
+  //           {getNoItemsMessage()}
+  //         </div>
+  //       ) : (
+  //         <>
+  //           {filteredItems.map((item) => (
+  //             <SelectItem
+  //               key={`${item.id}-${item.name}`}
+  //               value={String(item.id)}
+  //               disabled={!item.id}
+  //             >
+  //               {item.name}
+  //             </SelectItem>
+  //           ))}
+  //           {renderResultCount()}
+  //         </>
+  //       )}
+  //     </SelectContent>
+  //   </Select>
+  // );
+
   return (
     <Select
       value={String(value)}
-      onValueChange={(val) => {
-        const numericValue =
-          val === "all" || isNaN(Number(val)) ? val : Number(val);
-        onValueChange(numericValue);
-      }}
+      onValueChange={handleValueChange}
+      disabled={disabled || isLoading}
     >
       <SelectTrigger className="w-full">
-        <SelectValue placeholder="Chọn mục" />
+        <SelectValue placeholder={placeholder}>{getDisplayValue()}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         <div className="px-2 py-1 sticky top-0 bg-background z-10">
@@ -164,7 +286,7 @@ export function GenericSelector<T extends Item>({
               className="pl-8 text-sm h-8"
               value={searchKeyword}
               onChange={handleSearchChange}
-              disabled={isLoading}
+              disabled={isLoading || disabled}
             />
           </div>
         </div>
@@ -183,7 +305,7 @@ export function GenericSelector<T extends Item>({
           <>
             {filteredItems.map((item) => (
               <SelectItem
-                key={item.id}
+                key={`${item.id}-${item.name}`} // Cải thiện key
                 value={String(item.id)}
                 disabled={!item.id}
               >

@@ -81,6 +81,8 @@ const navItems: NavItem[] = [
     subItems: [
       { title: "Công dụng chữa bệnh", href: "/admin/diseases" },
       { title: "Họ thực vật", href: "/admin/families" },
+      { title: "Chi thực vật", href: "/admin/genera" },
+      { title: "Hoạt chất khoa học", href: "/admin/active-compound" },
     ],
   },
   {

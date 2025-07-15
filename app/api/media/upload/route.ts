@@ -16,10 +16,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"];
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { success: false, message: "Chỉ hỗ trợ định dạng JPG, PNG, WEBP" },
+        { success: false, message: "Chỉ hỗ trợ định dạng JPG, PNG, WEBP, PDF" },
         { status: 400 }
       );
     }

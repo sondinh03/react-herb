@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Filter, Image as ImageIcon, X } from "lucide-react";
+import { Search, Filter, Image as ImageIcon, X, Loader2, AlertCircle } from "lucide-react";
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -32,7 +32,6 @@ import { DiseasesResponse } from "../types/diseases";
 import { PAGINATION } from "@/constants/pagination";
 import { ViewType } from "@/types/common";
 import { ActiveCompoundResponse } from "../types/activeCompound";
-import { PLANT_STATUS_OPTIONS } from "@/constants/plant";
 
 // ============================================================================
 // TYPE DEFINITIONS - Định nghĩa các interface và types
@@ -71,19 +70,17 @@ interface MediaFeaturedResponse {
 // ============================================================================
 
 export default function PlantsPage() {
-  // --------------------------------------------------------------------------
-  // HOOKS & ROUTER SETUP - Thiết lập hooks và router
-  // --------------------------------------------------------------------------
+  // Thiết lập hooks và router
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // --------------------------------------------------------------------------
   // STATE MANAGEMENT - Quản lý state
-  // --------------------------------------------------------------------------
-
   /** State chính cho tham số tìm kiếm và phân trang */
   const [searchState, setSearchState] = useState<SearchParams>({
-    pageIndex: Number.parseInt(searchParams.get("page") || "1", 10),
+    pageIndex: Number.parseInt(
+      searchParams.get("page") || PAGINATION.DEFAULT_PAGE_INDEX.toString(),
+      10
+    ),
     pageSize: Number.parseInt(
       searchParams.get("size") || PAGINATION.DEFAULT_PAGE_SIZE.toString(),
       10
@@ -106,16 +103,47 @@ export default function PlantsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [viewType, setViewType] = useState<ViewType>("grid");
   const [diseases, setDiseases] = useState<DiseasesResponse[]>([]);
-
-  const [activeCompounds, setActiveCompounds] = useState<ActiveCompoundResponse[]>([]);
+  const [activeCompounds, setActiveCompounds] = useState<
+    ActiveCompoundResponse[]
+  >([]);
   const [isLoadingDiseases, setIsLoadingDiseases] = useState(false);
-  const [isLoadingActiveCompounds, SetIsLoadingActiveCompounds] = useState(false);
+  const [isLoadingActiveCompounds, setIsLoadingActiveCompounds] =
+    useState(false);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
+    null
+  );
 
-  // --------------------------------------------------------------------------
-  // API FUNCTIONS - Các hàm gọi API
-  // --------------------------------------------------------------------------
+  const buildQueryParams = useCallback((state: SearchParams) => {
+    const params = new URLSearchParams();
 
-  const fetchPlants = async () => {
+    params.set("pageIndex", Math.max(1, state.pageIndex).toString());
+    params.set("pageSize", Math.max(1, state.pageSize).toString());
+
+    if (state.keyword?.trim()) {
+      params.set("keyword", state.keyword.trim());
+    }
+
+    if (state.sortField) {
+      params.set("sortField", state.sortField);
+      params.set("sortDirection", state.sortDirection);
+    }
+
+    Object.entries(state.filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== "all" && value !== null) {
+        params.set(`filters[${key}]`, value.toString());
+      }
+    });
+
+    return params.toString();
+  }, []);
+
+  const updateUrlWithSearchParams = useCallback(() => {
+    const params = buildQueryParams(searchState);
+    const newUrl = `/plants${params ? `?${params}` : ""}`;
+    router.push(newUrl, { scroll: false });
+  }, [searchState, router, buildQueryParams]);
+
+  const fetchPlants = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -126,29 +154,39 @@ export default function PlantsPage() {
         `/api/plants/search?${queryParams}`
       );
 
-      setPlants(result.data?.content || []);
-      setTotalElements(result.data?.totalElements || 0);
-      setTotalPages(result.data?.totalPages || 1);
-      updateUrlWithSearchParams();
+      if (result.success && result.data) {
+        setPlants(result.data.content || []);
+        setTotalElements(result.data.totalElements || 0);
+        setTotalPages(result.data.totalPages || 1);
+      } else {
+        throw new Error(result.message || "Không thể tải dữ liệu");
+      }
     } catch (error: any) {
-      setError(error.message || "Đã xảy ra lỗi khi tải dữ liệu");
+      const errorMessage = error.message || "Đã xảy ra lỗi khi tải dữ liệu";
+      setError(errorMessage);
+      setPlants([]);
+      setTotalElements(0);
+      setTotalPages(1);
+
       toast({
         title: "Lỗi",
-        description: error.message || "Đã xảy ra lỗi khi tải dữ liệu",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchState, buildQueryParams]);
 
-  const fetchDiseases = async (pageSize: number = 50) => {
-    setIsLoadingDiseases(true);
+  const fetchDiseases = useCallback(async (pageSize: number = 50) => {
+    setIsLoading(true);
     try {
       const result = await fetchApi<Page<DiseasesResponse>>(
         `/api/diseases/search?pageSize=${pageSize}`
       );
-      setDiseases(result.data?.content || []);
+      if (result.success && result.data) {
+        setDiseases(result.data.content || []);
+      }
     } catch (error: any) {
       toast({
         title: "Lỗi",
@@ -158,15 +196,18 @@ export default function PlantsPage() {
     } finally {
       setIsLoadingDiseases(false);
     }
-  };
+  }, []);
 
-  const fetchActiveCompounds = async (pageSize: number = 50) => {
-    SetIsLoadingActiveCompounds(true);
+  const fetchActiveCompounds = useCallback(async (pageSize: number = 50) => {
+    setIsLoadingActiveCompounds(true);
     try {
       const result = await fetchApi<Page<ActiveCompoundResponse>>(
         `/api/active-compound/search?pageSize=${pageSize}`
       );
-      setActiveCompounds(result.data?.content || []);
+
+      if (result.success && result.data) {
+        setActiveCompounds(result.data.content || []);
+      }
     } catch (error: any) {
       toast({
         title: "Lỗi",
@@ -174,51 +215,78 @@ export default function PlantsPage() {
         variant: "destructive",
       });
     } finally {
-      SetIsLoadingActiveCompounds(false);
+      setIsLoadingActiveCompounds(false);
     }
-  };
+  }, []);
 
   const handleKeywordChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newKeyword = e.target.value;
       setSearchState((prev) => ({
         ...prev,
-        keyword: e.target.value,
+        keyword: newKeyword,
       }));
+
+      // Debounce search
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+
+      const timeout = setTimeout(() => {
+        setSearchState((prev) => ({
+          ...prev,
+          pageIndex: 1,
+        }));
+      }, 500);
+
+      setSearchTimeout(timeout);
     },
-    []
+    [searchTimeout]
   );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        handleSearch();
+        if (searchTimeout) {
+          clearTimeout(searchTimeout);
+        }
+        setSearchState((prev) => ({
+          ...prev,
+          pageIndex: 1,
+        }));
       }
     },
-    []
+    [searchTimeout]
   );
 
   const handleSearch = useCallback(() => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
     setSearchState((prev) => ({
       ...prev,
-      pageIndex: 0,
+      pageIndex: 1,
     }));
-  }, []);
+  }, [searchTimeout]);
 
   const handleClearKeyword = useCallback(() => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
     setSearchState((prev) => ({
       ...prev,
       keyword: "",
       pageIndex: 1,
     }));
-  }, []);
+  }, [searchTimeout]);
 
   const handleDiseaseChange = useCallback((value: string | number) => {
     setSearchState((prev) => ({
       ...prev,
       filters: {
         ...prev.filters,
-        diseaseId: value === "all" ? "all" : value, // Giữ nguyên kiểu dữ liệu của value
+        diseaseId: value === "all" ? "all" : value,
       },
       pageIndex: 1,
     }));
@@ -240,7 +308,7 @@ export default function PlantsPage() {
       ...prev,
       filters: {
         ...prev.filters,
-        status: value === "all" ? undefined : value,
+        status: value === "all" ? "all" : value,
       },
       pageIndex: 1,
     }));
@@ -267,6 +335,9 @@ export default function PlantsPage() {
         sortField = "createdAt";
         sortDirection = "asc";
         break;
+      default:
+        sortField = "";
+        sortDirection = "asc";
     }
 
     setSearchState((prev) => ({
@@ -277,20 +348,46 @@ export default function PlantsPage() {
     }));
   }, []);
 
-  const handlePageChange = useCallback((page: number) => {
-    setSearchState((prev) => ({
-      ...prev,
-      pageIndex: page,
-    }));
-  }, []);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const validPage = Math.max(1, Math.min(page, totalPages));
+      setSearchState((prev) => ({
+        ...prev,
+        pageIndex: validPage,
+      }));
+    },
+    [totalPages]
+  );
 
   const handlePageSizeChange = useCallback((size: number) => {
+    const validSize = Math.max(1, size);
     setSearchState((prev) => ({
       ...prev,
-      pageSize: size,
+      pageSize: validSize,
       pageIndex: 1,
     }));
   }, []);
+
+  const handleClearAllFilters = useCallback(() => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    setSearchState({
+      pageIndex: 1,
+      pageSize: PAGINATION.DEFAULT_PAGE_SIZE,
+      keyword: "",
+      sortField: "",
+      sortDirection: "asc",
+      filters: {
+        diseaseId: "all",
+        activeCompoundId: "all",
+        status: "all",
+        createdBy: "all",
+      },
+    });
+  }, [searchTimeout]);
+
+  // Giá trị được tính toán
 
   const getSortByValue = useMemo(() => {
     const { sortField, sortDirection } = searchState;
@@ -302,61 +399,177 @@ export default function PlantsPage() {
     return "";
   }, [searchState.sortField, searchState.sortDirection]);
 
-  const buildQueryParams = (state: SearchParams) => {
-    const params = new URLSearchParams();
-    params.set("pageIndex", searchState.pageIndex.toString());
-    params.set("pageSize", searchState.pageSize.toString());
-
-    if (searchState.keyword) {
-      params.set("keyword", searchState.keyword);
-    }
-
-    if (searchState.sortField) {
-      params.set("sortField", searchState.sortField);
-      params.set("sortDirection", searchState.sortDirection);
-    }
-
-    Object.entries(searchState.filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== "all") {
-        params.set(`filters[${key}]`, value.toString());
-      }
-    });
-    return params.toString();
-  };
-
-  const updateUrlWithSearchParams = useCallback(() => {
-    const params = buildQueryParams(searchState);
-    router.push(`/plants?${params}`, { scroll: true });
-  }, [searchState, router]);
+  const hasActiveFilters = useMemo(() => {
+    return (
+      searchState.keyword?.trim() ||
+      searchState.filters.diseaseId !== "all" ||
+      searchState.filters.activeCompoundId !== "all" ||
+      searchState.filters.status !== "all" ||
+      searchState.sortField
+    );
+  }, [searchState]);
 
   useEffect(() => {
     fetchDiseases();
     fetchActiveCompounds();
-  }, []);
+  }, [fetchDiseases, fetchActiveCompounds]);
 
+  // Effect để fetch plants khi searchState thay đổi
   useEffect(() => {
     fetchPlants();
   }, [
     searchState.pageIndex,
     searchState.pageSize,
+    searchState.keyword,
     searchState.sortField,
     searchState.sortDirection,
     searchState.filters.diseaseId,
     searchState.filters.activeCompoundId,
+    searchState.filters.status,
+    searchState.filters.createdBy,
   ]);
 
+  // Effect để cập nhật URL khi searchState thay đổi (nhưng tách riêng khỏi fetch)
   useEffect(() => {
-    if (searchState.pageIndex === 0) {
-      setSearchState((prev) => ({
-        ...prev,
-        pageIndex: 1, // Đảm bảo UI hiển thị đúng
-      }));
-    }
-  }, [plants]);
+    const timeoutId = setTimeout(() => {
+      updateUrlWithSearchParams();
+    }, 100); 
 
-  // --------------------------------------------------------------------------
-  // MAIN RENDER - Render chính của component
-  // --------------------------------------------------------------------------
+    return () => clearTimeout(timeoutId);
+  }, [
+    searchState.pageIndex,
+    searchState.pageSize,
+    searchState.keyword,
+    searchState.sortField,
+    searchState.sortDirection,
+    searchState.filters.diseaseId,
+    searchState.filters.activeCompoundId,
+    searchState.filters.status,
+    searchState.filters.createdBy,
+  ]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout]);
+
+  const renderLoadingGrid = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {Array.from({ length: searchState.pageSize }).map((_, index) => (
+        <Card key={index} className="overflow-hidden animate-pulse">
+          <div className="h-48 bg-gray-200"></div>
+          <CardHeader className="pb-2">
+            <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+          </CardHeader>
+          <CardContent className="pb-2">
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          </CardContent>
+          <CardFooter>
+            <div className="h-9 bg-gray-200 rounded w-full"></div>
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  );
+
+  const renderErrorState = () => (
+    <div className="text-center py-12">
+      <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        Đã xảy ra lỗi
+      </h3>
+      <p className="text-gray-600 mb-4">{error}</p>
+      <Button onClick={fetchPlants} variant="outline">
+        <Loader2 className="h-4 w-4 mr-2" />
+        Thử lại
+      </Button>
+    </div>
+  );
+
+  const renderEmptyState = () => (
+    <div className="col-span-full text-center py-12">
+      <div className="mb-4">
+        <ImageIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          Không tìm thấy cây dược liệu nào
+        </h3>
+        <p className="text-gray-600">
+          {hasActiveFilters
+            ? "Thử thay đổi bộ lọc để tìm thấy kết quả phù hợp."
+            : "Hiện tại chưa có dữ liệu cây dược liệu nào."}
+        </p>
+      </div>
+      {hasActiveFilters && (
+        <Button
+          variant="outline"
+          onClick={handleClearAllFilters}
+          className="mt-4"
+        >
+          Xóa tất cả bộ lọc
+        </Button>
+      )}
+    </div>
+  );
+
+  const renderPlantsGrid = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {plants.map((plant) => (
+        <Card
+          key={plant.id}
+          className="overflow-hidden hover:shadow-lg transition-shadow duration-200"
+        >
+          <div className="h-48 bg-green-50 relative overflow-hidden">
+            {plant.featuredMediaId && plant.featuredMediaId > 0 ? (
+              <MediaViewer
+                mediaId={plant.featuredMediaId}
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                width="100%"
+                height="100%"
+                alt={plant.name}
+                showLoader={true}
+                priority={false}
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100">
+                <ImageIcon className="h-8 w-8 text-gray-400" />
+                <span className="mt-2 text-sm text-gray-500">
+                  Không có hình ảnh
+                </span>
+              </div>
+            )}
+          </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg line-clamp-2" title={plant.name}>
+              {plant.name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pb-2">
+            <p className="text-sm text-gray-500 line-clamp-1">
+              Họ: {plant.family || "Không có thông tin"}
+            </p>
+            <p
+              className="text-sm text-gray-500 line-clamp-1"
+              title={plant.scientificName}
+            >
+              Tên khoa học: {plant.scientificName || "Không có thông tin"}
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Link href={`/plants/${plant.id}`} className="w-full">
+              <Button variant="outline" className="w-full hover:bg-green-50">
+                Xem chi tiết
+              </Button>
+            </Link>
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -366,6 +579,11 @@ export default function PlantsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Cây dược liệu</h1>
           <p className="mt-2 text-gray-600">
             Danh sách các loại cây dược liệu Việt Nam
+            {totalElements > 0 && (
+              <span className="ml-2 text-sm font-medium">
+                ({totalElements.toLocaleString()} kết quả)
+              </span>
+            )}
           </p>
         </div>
       </div>
@@ -386,8 +604,9 @@ export default function PlantsPage() {
               />
               <button
                 type="button"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
                 onClick={handleSearch}
+                disabled={isLoading}
                 aria-label="Tìm kiếm"
               >
                 <Search className="h-4 w-4" />
@@ -415,12 +634,11 @@ export default function PlantsPage() {
                 onValueChange={handleDiseaseChange}
                 items={diseases}
                 isLoading={isLoadingDiseases}
-                isSearching={false}
+                placeholder="Chọn công dụng"
+                // isSearching={false}
                 searchPlaceholder="Tìm kiếm công dụng..."
                 allOption={{ value: "all", label: "Tất cả công dụng" }}
                 noResultsText="Không tìm thấy công dụng"
-                noDataText="Chưa có dữ liệu công dụng bệnh"
-                loadingText="Đang tải danh sách công dụng..."
               />
             )}
           </div>
@@ -459,235 +677,38 @@ export default function PlantsPage() {
             </Select>
           </div>
         </div>
+        {hasActiveFilters && (
+          <div className="mt-4 flex items-center gap-2">
+            <Filter className="h-4 w-4 text-gray-500" />
+            <span className="text-sm text-gray-600">Đang áp dụng bộ lọc</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearAllFilters}
+              className="h-6 px-2 text-xs"
+            >
+              Xóa tất cả
+            </Button>
+          </div>
+        )}
       </div>
+
       <Tabs
         value={viewType}
         onValueChange={(value) => setViewType(value as "grid" | "list")}
         className="mb-8"
       >
-        <div className="flex justify-between items-center">
-          {/* <TabsList>
-            <TabsTrigger value="grid">Lưới</TabsTrigger>
-            <TabsTrigger value="list">Danh sách</TabsTrigger>
-          </TabsList> */}
-        </div>
         <TabsContent value="grid" className="mt-6">
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: searchState.pageSize }).map((_, index) => (
-                <Card key={index} className="overflow-hidden animate-pulse">
-                  <div className="h-48 bg-gray-200"></div>
-                  <CardHeader className="pb-2">
-                    <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                  </CardHeader>
-                  <CardContent className="pb-2">
-                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                  </CardContent>
-                  <CardFooter>
-                    <div className="h-9 bg-gray-200 rounded w-full"></div>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {plants.length > 0 ? (
-                plants.map((plant) => (
-                  <Card key={plant.id} className="overflow-hidden">
-                    <div className="h-48 bg-green-50 relative overflow-hidden">
-                      {plant.featuredMediaId && plant.featuredMediaId > 0 ? (
-                        <MediaViewer
-                          mediaId={plant.featuredMediaId}
-                          className="w-full h-full object-cover"
-                          width="100%"
-                          height="100%"
-                          alt={plant.name}
-                          showLoader={true}
-                          priority={false}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100">
-                          <ImageIcon className="h-8 w-8 text-gray-400" />
-                          <span className="mt-2 text-sm text-gray-500">
-                            Không có hình ảnh
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">{plant.name}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <p className="text-sm text-gray-500">
-                        Họ: {plant.family || "Không có thông tin"}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Tên khoa học:{" "}
-                        {plant.scientificName || "Không có thông tin"}
-                      </p>
-                    </CardContent>
-                    <CardFooter>
-                      <Link href={`/plants/${plant.id}`} className="w-full">
-                        <Button variant="outline" className="w-full">
-                          Xem chi tiết
-                        </Button>
-                      </Link>
-                    </CardFooter>
-                  </Card>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-gray-500 text-lg">
-                    Không tìm thấy cây dược liệu nào phù hợp.
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      setSearchState({
-                        pageIndex: 1,
-                        pageSize: 12,
-                        keyword: "",
-                        sortField: "",
-                        sortDirection: "asc",
-                        filters: {
-                          diseaseId: undefined,
-                          status: undefined,
-                          createdBy: undefined,
-                        },
-                      })
-                    }
-                    className="mt-4"
-                  >
-                    Xóa bộ lọc
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
+          {error
+            ? renderErrorState()
+            : isLoading
+            ? renderLoadingGrid()
+            : plants.length > 0
+            ? renderPlantsGrid()
+            : renderEmptyState()}
         </TabsContent>
-        {/* <TabsContent value="list" className="mt-6">
-          {isLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: searchState.pageSize }).map((_, index) => (
-                <div
-                  key={index}
-                  className="bg-white rounded-lg shadow-sm overflow-hidden animate-pulse"
-                >
-                  <div className="flex flex-col sm:flex-row">
-                    <div className="sm:w-48 h-48 sm:h-auto bg-gray-200 flex-shrink-0"></div>
-                    <div className="p-6 flex-1">
-                      <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                        <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                      </div>
-                      <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-full mb-4"></div>
-                      <div className="flex justify-end">
-                        <div className="h-9 bg-gray-200 rounded w-32"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {plants.length > 0 ? (
-                plants.map((plant) => (
-                  <div
-                    key={plant.id}
-                    className="bg-white rounded-lg shadow-sm overflow-hidden"
-                  >
-                    <div className="flex flex-col sm:flex-row">
-                      <div className="sm:w-48 h-48 sm:h-auto bg-green-50 flex-shrink-0">
-                        {plant.featuredMediaId && plant.featuredMediaId > 0 ? (
-                          <MediaViewer
-                            mediaId={plant.featuredMediaId}
-                            className="w-full h-full object-cover"
-                            width="100%"
-                            height="100%"
-                            alt={plant.name}
-                            showLoader={true}
-                            priority={false}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100">
-                            <ImageIcon className="h-8 w-8 text-gray-400" />
-                            <span className="mt-2 text-sm text-gray-500">
-                              Không có hình ảnh
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-6 flex-1">
-                        <h3 className="text-lg font-semibold mb-2">
-                          {plant.name}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-4">
-                          Tên khoa học:{" "}
-                          {plant.scientificName || "Không có thông tin"}
-                        </p>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
-                          <p className="text-sm text-gray-500">
-                            Họ: {plant.family || "Không có thông tin"}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Chi: {plant.genus || "Không có thông tin"}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Bộ phận dùng:{" "}
-                            {plant.partsUsed || "Không có thông tin"}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Vùng phân bố:{" "}
-                            {plant.distribution || "Không có thông tin"}
-                          </p>
-                        </div>
-                        <div className="flex justify-end">
-                          <Link href={`/plants/${plant.id}`}>
-                            <Button variant="outline">Xem chi tiết</Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-gray-500 text-lg">
-                    Không tìm thấy cây dược liệu nào phù hợp.
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      setSearchState({
-                        pageIndex: 1,
-                        pageSize: 12,
-                        keyword: "",
-                        sortField: "",
-                        sortDirection: "asc",
-                        filters: {
-                          diseaseId: undefined,
-                          status: undefined,
-                          createdBy: undefined,
-                        },
-                      })
-                    }
-                    className="mt-4"
-                  >
-                    Xóa bộ lọc
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </TabsContent> */}
       </Tabs>
-      {totalPages > 1 && (
+      {!isLoading && !error && totalPages > 1 && (
         <Pagination
           currentPage={searchState.pageIndex}
           totalPages={totalPages}

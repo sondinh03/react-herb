@@ -20,22 +20,27 @@ import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { useDataSearch } from "@/hooks/useDataSearch";
 import { fetchApi } from "@/lib/api-client";
-import { Family, FamilyForm } from "@/app/types/families";
+import { HerbResponse } from "@/types/api";
+import { GeneraForm, GeneraResponse } from "@/app/types/genera";
 
-interface FamilyResponse<T> {
-  data: T;
+interface Genus {
+  id: number;
+  name: string;
+  description: string | null;
+  familyId: number;
+  familyName: string;
 }
 
-export default function FamiliesPage() {
+export default function GeneraPage() {
   const router = useRouter();
-  const [isAdding, setIsAdding] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState<FamilyForm>({ name: "", description: "" });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  const [isAdding, setIsAdding] = useState(false); // Điều khiển hiển thị form
+  const [editingId, setEditingId] = useState<number | null>(null); // ID của chi đang sửa
+  const [form, setForm] = useState<GeneraForm>({ name: "", description: "", familyId: 0 }); // Dữ liệu form
+  const [isSubmitting, setIsSubmitting] = useState(false); // Trạng thái gửi API
+  const nameInputRef = useRef<HTMLInputElement>(null); // Ref để focus trường name
 
   const {
-    data: families,
+    data: genera,
     isLoading,
     error,
     pagination,
@@ -44,52 +49,59 @@ export default function FamiliesPage() {
     handleKeywordChange,
     handlePageChange,
     handlePageSizeChange,
-  } = useDataSearch<Family>({
-    apiEndpoint: `${process.env.NEXT_PUBLIC_BASE_PATH}/api/families/search`,
+  } = useDataSearch<Genus>({
+    apiEndpoint: `${process.env.NEXT_PUBLIC_BASE_PATH}/api/genera/search`,
     initialParams: {
       pageIndex: 1,
-      pageSize: 20,
+      pageSize: 10,
     },
     requireAuth: false,
   });
 
+  // Focus vào trường name khi form hiện
   useEffect(() => {
     if (isAdding && nameInputRef.current) {
       nameInputRef.current.focus();
     }
   }, [isAdding]);
 
+  // Định nghĩa cột bảng
   const columns = [
     {
       key: "id",
       header: "ID",
-      cell: (family: Family) => (
-        <span className="font-medium">{family.id}</span>
+      cell: (genus: Genus) => (
+        <span className="font-medium">{genus.id}</span>
       ),
       className: "w-[50px]",
     },
     {
       key: "name",
-      header: "Tên họ thực vật",
-      cell: (family: Family) => (
-        <span className="font-medium">{family.name}</span>
+      header: "Tên chi thực vật",
+      cell: (genus: Genus) => (
+        <span className="font-medium">{genus.name}</span>
       ),
+    },
+    {
+      key: "familyName",
+      header: "Họ thực vật",
+      cell: (genus: Genus) => genus.familyName || "-",
     },
     {
       key: "description",
       header: "Mô tả",
-      cell: (family: Family) => family.description || "-",
+      cell: (genus: Genus) => genus.description || "-",
     },
     {
       key: "actions",
       header: "Thao tác",
-      cell: (family: Family) => (
+      cell: (genus: Genus) => (
         <div className="flex items-center justify-end space-x-2">
           <Button
             variant="ghost"
             size="sm"
             className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-            onClick={() => handleViewFamily(family.id)}
+            onClick={() => handleViewGenus(genus.id)}
             disabled={true}
           >
             <Eye className="h-4 w-4" />
@@ -99,7 +111,7 @@ export default function FamiliesPage() {
             variant="ghost"
             size="sm"
             className="h-8 w-8 p-0 text-amber-600 hover:text-amber-800 hover:bg-amber-50"
-            onClick={() => handleEditFamily(family.id)}
+            onClick={() => handleEditGenus(genus.id)}
           >
             <Edit className="h-4 w-4" />
             <span className="sr-only">Sửa</span>
@@ -120,7 +132,7 @@ export default function FamiliesPage() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                onClick={() => handleDeleteFamily(family.id)}
+                onClick={() => handleDeleteGenus(genus.id)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 <span>Xóa</span>
@@ -133,104 +145,115 @@ export default function FamiliesPage() {
     },
   ];
 
-  const handleAddFamily = () => {
-    setForm({ name: "", description: "" });
-    setEditingId(null);
-    setIsAdding(true);
+  // Xử lý nhấn nút "Thêm" để hiện form
+  const handleAddGenus = () => {
+    setForm({ name: "", description: "", familyId: 0 }); // Reset form
+    setEditingId(null); // Không phải chế độ sửa
+    setIsAdding(true); // Hiện form
   };
 
-  const handleEditFamily = async (id: number) => {
-    const family = await fetchApi<FamilyResponse<Family>>(`/api/families/${id}`, {
+  // Xử lý nhấn nút "Sửa" để hiện form với dữ liệu điền sẵn
+  const handleEditGenus = async (id: number) => {
+    const genus = await fetchApi<HerbResponse<GeneraResponse>>(`/api/genera/${id}`, {
       method: "GET",
     });
 
-    if (family) {
+    if (genus) {
       setForm({
-        name: family.data.name,
-        description: family.data.description || "",
+        name: genus.data.name,
+        description: genus.data.description || "",
+        familyId: genus.data.familyId,
       });
       setEditingId(id);
-      setIsAdding(true);
+      setIsAdding(true); // Hiện form
     }
   };
 
-  const handleViewFamily = (familyId: number) => {
-    router.push(`/admin/families/${familyId}`);
+  // Xử lý xem chi tiết
+  const handleViewGenus = (genusId: number) => {
+    router.push(`/admin/genera/${genusId}`);
   };
 
-  const handleDeleteFamily = async (id: number) => {
+  // Xử lý xóa chi thực vật
+  const handleDeleteGenus = async (id: number) => {
     try {
-      await fetchApi<null>(`/api/families/${id}`, {
+      await fetchApi<null>(`/api/genera/${id}`, {
         method: "DELETE",
       });
       toast({
         title: "Thành công",
-        description: "Đã xóa họ thực vật",
+        description: "Đã xóa chi thực vật",
         variant: "success",
       });
-      handleSearch();
+      handleSearch(); // Làm mới bảng
     } catch (error: any) {
-      console.error("Error deleting family:", error);
+      console.error("Error deleting genus:", error);
       toast({
         title: "Lỗi",
-        description: error.message || "Không thể xóa họ thực vật",
+        description: error.message || "Không thể xóa chi thực vật",
         variant: "destructive",
       });
     }
   };
 
+  // Xử lý gửi form (thêm hoặc sửa)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setIsSubmitting(true); // Vô hiệu hóa nút khi gửi
     try {
       if (editingId) {
+        // API: Cập nhật chi thực vật
         const id = editingId;
-        await fetchApi<FamilyResponse<boolean>>(`/api/families/edit/${id}`, {
+        await fetchApi<HerbResponse<Boolean>>(`/api/genera/edit/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(form),
         });
         toast({
           title: "Thành công",
-          description: "Đã cập nhật họ thực vật",
+          description: "Đã cập nhật chi thực vật",
           variant: "success",
         });
       } else {
-        await fetchApi<FamilyResponse<Family>>(`/api/families/create`, {
+        // API: Thêm chi thực vật mới
+        await fetchApi<HerbResponse<GeneraResponse>>(`/api/genera/create`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(form),
         });
         toast({
           title: "Thành công",
-          description: "Đã thêm họ thực vật",
+          description: "Đã thêm chi thực vật",
           variant: "success",
         });
       }
+      // Ẩn form và reset trạng thái sau khi thành công
       setIsAdding(false);
       setEditingId(null);
-      setForm({ name: "", description: "" });
-      handleSearch();
+      setForm({ name: "", description: "", familyId: 0 });
+      handleSearch(); // Làm mới bảng
     } catch (error: any) {
-      console.error("Error saving family:", error);
+      console.error("Error saving genus:", error);
       toast({
         title: "Lỗi",
-        description: error.message || "Không thể lưu họ thực vật",
+        description: error.message || "Không thể lưu chi thực vật",
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false); // Kích hoạt lại nút
     }
   };
 
+  // Xử lý hủy để ẩn form
   const handleCancel = () => {
     setIsAdding(false);
     setEditingId(null);
-    setForm({ name: "", description: "" });
+    setForm({ name: "", description: "", familyId: 0 });
   };
 
-  const handleRowClick = (family: Family) => {
-    handleViewFamily(family.id);
+  // Xử lý click vào dòng để xem chi tiết
+  const handleRowClick = (genus: Genus) => {
+    handleViewGenus(genus.id);
   };
 
   return (
@@ -238,40 +261,55 @@ export default function FamiliesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Quản lý họ thực vật
+            Quản lý chi thực vật
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Quản lý thông tin các họ thực vật trong hệ thống
+            Quản lý thông tin các chi thực vật trong hệ thống
           </p>
         </div>
         <div className="mt-4 sm:mt-0">
           <Button
             className="flex items-center gap-1"
-            onClick={handleAddFamily}
+            onClick={handleAddGenus}
           >
             <Plus className="h-4 w-4" />
-            Thêm họ thực vật
+            Thêm chi thực vật
           </Button>
         </div>
       </div>
 
+      {/* Form chỉ hiện khi isAdding = true */}
       {isAdding && (
         <div className="mb-6 p-6 bg-white rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-4">
-            {editingId ? "Sửa họ thực vật" : "Thêm họ thực vật mới"}
+            {editingId ? "Sửa chi thực vật" : "Thêm chi thực vật mới"}
           </h2>
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4">
               <div>
                 <Label htmlFor="name" className="text-sm font-medium">
-                  Tên họ thực vật
+                  Tên chi thực vật
                 </Label>
                 <Input
                   id="name"
                   ref={nameInputRef}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Nhập tên họ thực vật"
+                  placeholder="Nhập tên chi thực vật"
+                  required
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="familyId" className="text-sm font-medium">
+                  ID Họ thực vật
+                </Label>
+                <Input
+                  id="familyId"
+                  type="number"
+                  value={form.familyId}
+                  onChange={(e) => setForm({ ...form, familyId: parseInt(e.target.value) || 0 })}
+                  placeholder="Nhập ID họ thực vật"
                   required
                   className="mt-1"
                 />
@@ -286,7 +324,7 @@ export default function FamiliesPage() {
                   onChange={(e) =>
                     setForm({ ...form, description: e.target.value })
                   }
-                  placeholder="Nhập mô tả họ thực vật"
+                  placeholder="Nhập mô tả chi thực vật"
                   rows={4}
                   className="mt-1"
                 />
@@ -318,20 +356,20 @@ export default function FamiliesPage() {
         onKeywordChange={handleKeywordChange}
         onSearch={handleSearch}
         showExport={true}
-        placeholder="Tìm kiếm họ thực vật..."
+        placeholder="Tìm kiếm chi thực vật..."
       />
 
       <div className="mt-6">
         <DataTable
-          data={families}
+          data={genera}
           columns={columns}
           isLoading={isLoading}
           error={error}
           pagination={pagination}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
-          onRowClick={handleRowClick}
-          emptyMessage="Không tìm thấy họ thực vật nào"
+          // onRowClick={handleRowClick}
+          emptyMessage="Không tìm thấy chi thực vật nào"
           labels={{
             previous: "Trước",
             next: "Sau",
