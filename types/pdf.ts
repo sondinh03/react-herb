@@ -3,6 +3,8 @@ export interface PDFViewerProps {
   maxPreviewPages?: number;
   isPaid?: boolean;
   className?: string;
+  onPurchaseClick?: () => void;
+  onLoad?: (result: PDFLoadResult) => void;
 }
 
 export interface PDFPageInfo {
@@ -13,4 +15,16 @@ export interface PDFPageInfo {
 export interface PDFLoadResult {
   numPages: number;
   allowedPages: number;
+}
+
+export interface PDFError {
+  code: string;
+  message: string;
+  details?: any;
+}
+
+export interface PDFLoadProgress {
+  loaded: number;
+  total: number;
+  percentage: number;
 }

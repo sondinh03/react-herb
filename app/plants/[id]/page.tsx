@@ -16,6 +16,8 @@ import {
   Map,
   ImageIcon,
   BookIcon,
+  Heart,
+  Bookmark,
 } from "lucide-react";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/hooks/use-toast";
@@ -35,8 +37,6 @@ import { Spinner } from "@/components/spinner";
 import { BackButton } from "@/components/BackButton";
 import { handleWait } from "@/components/header";
 import React from "react";
-import { fetchExternalImage } from "next/dist/server/image-optimizer";
-import { create } from "lodash";
 
 export default function PlantDetailPage({
   params,
@@ -356,19 +356,15 @@ export default function PlantDetailPage({
               <h1 className="text-3xl font-bold text-gray-900">{plant.name}</h1>
               <p className="mt-2 text-gray-600">{plant.scientificName}</p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="icon" onClick={handleWait}>
-                <Share2 className="h-4 w-4" />
-                <span className="sr-only">Chia sẻ</span>
-              </Button>
-              <Button variant="outline" size="icon" onClick={handleWait}>
-                <Printer className="h-4 w-4" />
-                <span className="sr-only">In</span>
-              </Button>
-              <Button variant="outline" size="icon" onClick={handleWait}>
-                <Download className="h-4 w-4" />
-                <span className="sr-only">Tải xuống</span>
-              </Button>
+            <div className="flex gap-3">
+              <Button variant="outline" size="sm" onClick={handleWait}>
+                  <Heart className="h-4 w-4 mr-2" />
+                  Yêu thích
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleWait}>
+                  <Bookmark className="h-4 w-4 mr-2" />
+                  Lưu
+                </Button>
             </div>
           </div>
 
@@ -404,9 +400,9 @@ export default function PlantDetailPage({
                     <p>
                       <span className="font-medium">Họ:</span> {plant.family}
                     </p>
-                    {plant.genus && (
+                    {plant.genera && (
                       <p>
-                        <span className="font-medium">Chi:</span> {plant.genus}
+                        <span className="font-medium">Chi:</span> {plant.genera}
                       </p>
                     )}
                     <p>

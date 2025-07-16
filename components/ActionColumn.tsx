@@ -24,10 +24,10 @@ interface ActionColumnProps<T> {
   status: number;
   onView: (id: number) => void;
   onEdit: (id: number) => void;
-  onApprove: (id: number) => void;
-  onReject: (id: number) => void;
-  onArchive: (id: number) => void;
-  onDelete: (id: number) => void;
+  onApprove?: (id: number) => void;
+  onReject?: (id: number) => void;
+  onArchive?: (id: number) => void;
+  onDelete?: (id: number) => void;
   statusOptions: { value: number; label: string }[];
 }
 

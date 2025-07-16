@@ -289,30 +289,30 @@ export default function PlantDetailPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Thân</h3>
-                  <p className="mt-1 text-base">{plant.stem || "Chưa có"}</p>
+                  <p className="mt-1 text-base">{plant.stemDescription || "Chưa có"}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Lá</h3>
-                  <p className="mt-1 text-base">{plant.leaves || "Chưa có"}</p>
+                  <p className="mt-1 text-base">{plant.leafDescription || "Chưa có"}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Hoa</h3>
-                  <p className="mt-1 text-base">{plant.flowers || "Chưa có"}</p>
+                  <p className="mt-1 text-base">{plant.flowerDescription || "Chưa có"}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Quả/Hạt</h3>
-                  <p className="mt-1 text-base">{plant.fruits || "Chưa có"}</p>
+                  <p className="mt-1 text-base">{plant.fruitDescription || "Chưa có"}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Rễ</h3>
-                  <p className="mt-1 text-base">{plant.roots || "Chưa có"}</p>
+                  <p className="mt-1 text-base">{plant.rootDescription || "Chưa có"}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">
-                    Thành phần hóa học
+                    Hoạt chất chính
                   </h3>
                   <p className="mt-1 text-base">
-                    {plant.chemicalComposition || "Chưa có"}
+                    {plant.activeCompound || "Chưa có"}
                   </p>
                 </div>
                 <div>
