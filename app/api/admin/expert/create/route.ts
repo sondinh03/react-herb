@@ -4,8 +4,7 @@ import { NextRequest } from "next/server";
 export async function POST(request: NextRequest) {
   return callApiPost(
     request, 
-    "/api/diseases", 
-    "Tạo công dụng thành công",
-    { requireAuth: false }
+    "/api/expert", 
+    "Tạo bài viết thành công"
   );
 }

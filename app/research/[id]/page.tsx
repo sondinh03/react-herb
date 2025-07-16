@@ -21,6 +21,7 @@ import { toast } from "@/hooks/use-toast";
 import { ResolvedPos } from "@tiptap/pm/model";
 import { BackButton } from "@/components/BackButton";
 import dynamic from "next/dynamic";
+import { handleWait } from "@/components/header";
 
 const PDFViewer = dynamic(() => import("@/components/media/PDFViewer"), {
   ssr: false, // Tắt SSR để tránh lỗi DOMMatrix
@@ -353,29 +354,12 @@ export default function ResearchDetailPage({
                     <h2 className="text-xl font-bold text-gray-900">
                       Xem trước PDF
                     </h2>
-                    {/* <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleClosePDFPreview}
-                      className="h-8 w-8 p-0"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button> */}
                   </div>
                   <PDFViewer
                     pdfUrl={`${baseUrl}${research.mediaUrl}`}
                     maxPreviewPages={research.previewPages}
-                    purchaseInfo={purchaseInfo}
                     isPaid={isPaid}
-                    onPurchaseSuccess={(documentId) => {
-                      // Xử lý khi thanh toán thành công
-                      console.log("Đã mua thành công:", documentId);
-                    }}
-                    onPurchaseError={(error) => {
-                      // Xử lý khi thanh toán thất bại
-                      console.error("Lỗi thanh toán:", error);
-                    }}
-                    className="mb-8"
+                    onLoad={(result) => console.log(`Loaded ${result.numPages} pages`)}
                   />
                 </CardContent>
               </Card>

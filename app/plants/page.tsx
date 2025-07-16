@@ -202,7 +202,7 @@ export default function PlantsPage() {
     setIsLoadingActiveCompounds(true);
     try {
       const result = await fetchApi<Page<ActiveCompoundResponse>>(
-        `/api/active-compound/search?pageSize=${pageSize}`
+        `/api/active-compounds/search?pageSize=${pageSize}`
       );
 
       if (result.success && result.data) {
@@ -713,7 +713,10 @@ export default function PlantsPage() {
           currentPage={searchState.pageIndex}
           totalPages={totalPages}
           totalItems={totalElements}
+          showPageSizeSelector={true}
+          onPageSizeChange={handlePageSizeChange}
           pageSize={searchState.pageSize}
+          pageSizeOptions={[12, 24, 48]}
           onPageChange={handlePageChange}
           className="mt-12"
         />
