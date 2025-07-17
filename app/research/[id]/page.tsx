@@ -59,10 +59,10 @@ export default function ResearchDetailPage({
     try {
       const result = await fetchApi<Research>(`/api/research/${researchId}`);
       if (result.success && result.data) {
-        setResearch({
-          ...result.data,
-          mediaId: result.data.mediaId, // Đảm bảo mediaId được lưu
-        });
+        setResearch(result.data);
+        // Chỉ set isPaid = true nếu có thông tin thanh toán từ API
+        // (đây chỉ là mock, sau này sẽ kiểm tra từ API)
+        setIsPaid(result.data.isPurchased || false);
       } else {
         setError(result.message || "Không thể tải thông tin nghiên cứu");
       }
@@ -77,6 +77,24 @@ export default function ResearchDetailPage({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePurchaseSuccess = (documentId: string) => {
+    // Mock - sau này sẽ gọi API để xác nhận thanh toán
+    setIsPaid(true);
+    toast({
+      title: "Thành công",
+      description: "Bạn đã mua tài liệu thành công!",
+      variant: "default",
+    });
+  };
+
+  const handlePurchaseError = (error: string) => {
+    toast({
+      title: "Lỗi thanh toán",
+      description: error,
+      variant: "destructive",
+    });
   };
 
   // Handle PDF preview
@@ -175,12 +193,12 @@ export default function ResearchDetailPage({
   }, [researchId]);
 
   useEffect(() => {
-  if (research && research.downloadPrice === 0) {
-    setIsPaid(true);
-  } else {
-    setIsPaid(false); 
-  }
-}, [research]);
+    if (research && research.downloadPrice === 0) {
+      setIsPaid(true);
+    } else {
+      setIsPaid(false);
+    }
+  }, [research]);
 
   // Loading state
   if (isLoading) {
@@ -245,18 +263,6 @@ export default function ResearchDetailPage({
           <BackButton href="/research" />
 
           <div className="space-y-6">
-            {/* <div className="flex items-center gap-3">
-              {getStatusBadge(research.status)}
-              {research.field && (
-                <Badge
-                  variant="outline"
-                  className="bg-blue-50 text-blue-700 border-blue-200"
-                >
-                  {research.field}
-                </Badge>
-              )}
-            </div> */}
-
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
               {research.title}
             </h1>
@@ -347,19 +353,26 @@ export default function ResearchDetailPage({
             </Card>
 
             {/* Chỉ hiện PDF Preview khi showPDFPreview = true */}
-            {showPDFPreview && research.mediaUrl && (
+            {showPDFPreview && research?.mediaUrl && (
               <Card className="mb-8">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-bold text-gray-900">
-                      Xem trước PDF
+                      {isPaid ? "Tài liệu đã mua" : "Xem trước PDF"}
                     </h2>
                   </div>
                   <PDFViewer
                     pdfUrl={`${baseUrl}${research.mediaUrl}`}
-                    maxPreviewPages={research.previewPages}
+                    maxPreviewPages={research.previewPages || 2}
                     isPaid={isPaid}
-                    onLoad={(result) => console.log(`Loaded ${result.numPages} pages`)}
+                    purchaseInfo={{
+                      documentId: research.id.toString(),
+                      documentName: research.title,
+                      price: research.downloadPrice || 50000,
+                      currency: "VND",
+                    }}
+                    onPurchaseSuccess={handlePurchaseSuccess}
+                    onPurchaseError={handlePurchaseError}
                   />
                 </CardContent>
               </Card>

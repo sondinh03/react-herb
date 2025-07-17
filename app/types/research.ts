@@ -16,6 +16,7 @@ export interface Research {
   downloadPrice?: number; // Phí tải xuống, tùy chọn (BigDecimal ánh xạ thành number)
   previewPages: number;
   mediaUrl?: string; // URL của tệp media (PDF), tùy chọn, lấy từ mediaId hoặc dịch vụ lưu trữ
+  isPurchased: boolean;
   createdBy?: string; // Người tạo, kế thừa từ BaseEntity
   createdAt?: string; // Thời gian tạo, kế thừa từ BaseEntity
   updatedBy?: string; // Người cập nhật, kế thừa từ BaseEntity
