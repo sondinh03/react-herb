@@ -5,7 +5,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import { PDFDocumentProxy } from "pdfjs-dist";
 import { PDFViewerProps } from "@/types/pdf";
 import { toast } from "@/hooks/use-toast";
-import { handleWait } from "../header";
+import { PaymentDialog } from "@/components/PaymentDialog";
 
 // Cấu hình worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/duoclieu/pdf.worker.mjs";
@@ -17,17 +17,14 @@ interface PurchaseInfo {
   currency: string;
 }
 
-interface EnhancedPDFViewerProps extends PDFViewerProps {
-  purchaseInfo?: PurchaseInfo;
-  onPurchaseSuccess?: (documentId: string) => void;
-  onPurchaseError?: (error: string) => void;
-}
-
 const PDFViewer: React.FC<PDFViewerProps> = ({
   pdfUrl,
   maxPreviewPages = 2,
   isPaid = false,
   className = "",
+  purchaseInfo,
+  onPurchaseSuccess,
+  onPurchaseError,
 }) => {
   const canvasRefs = useRef<(HTMLCanvasElement | null)[]>([]);
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
@@ -35,6 +32,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [loadProgress, setLoadProgress] = useState<number>(0);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
   useEffect(() => {
     loadPDF();
@@ -113,6 +111,37 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     }
   };
 
+  const handlePurchase = async () => {
+    if (!purchaseInfo) return;
+    
+    try {
+      // Mock payment process - replace with real API call later
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (onPurchaseSuccess) {
+        onPurchaseSuccess(purchaseInfo.documentId);
+      }
+
+      toast({
+        title: 'Thành công',
+        description: 'Thanh toán thành công! Bạn có thể xem toàn bộ tài liệu.',
+        variant: 'default',
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Lỗi thanh toán không xác định';
+      
+      if (onPurchaseError) {
+        onPurchaseError(errorMessage);
+      }
+      
+      toast({
+        title: 'Lỗi thanh toán',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="text-center p-4">
@@ -136,6 +165,17 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
   return (
     <div className={`pdf-viewer ${className}`}>
+      <PaymentDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        purchaseInfo={purchaseInfo || {
+          documentName: "Tài liệu PDF",
+          price: 50000,
+          currency: "VND",
+        }}
+        onConfirm={handlePurchase}
+      />
+      
       <div className="mb-4 p-4 bg-gray-100 rounded">
         <span className="text-sm font-medium">
           {isPaid ? `Trang ${displayPages}/${numPages}` : `Xem trước ${displayPages}/${numPages} trang`}
@@ -160,7 +200,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                 </p>
                 <button
                   className="mt-2 px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
-                  onClick={() => handleWait()}
+                  onClick={() => setShowPaymentDialog(true)}
                 >
                   Mua ngay
                 </button>
