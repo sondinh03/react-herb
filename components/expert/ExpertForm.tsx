@@ -23,6 +23,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Loader2, Save, ArrowLeft } from "lucide-react";
 import { ExpertResponseDto } from "@/app/types/expert";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ExpertFormProps {
   mode: "add" | "edit";
@@ -46,6 +47,7 @@ export default function ExpertForm({ mode }: ExpertFormProps) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(mode === "edit");
+  const { getAuthToken } = useAuth();
 
   useEffect(() => {
     if (mode === "edit" && id) {
@@ -83,12 +85,24 @@ export default function ExpertForm({ mode }: ExpertFormProps) {
     e.preventDefault();
     setIsLoading(true);
 
+    const token = getAuthToken();
+      if (!token) {
+        throw new Error(
+          "Không tìm thấy token xác thực. Vui lòng đăng nhập lại."
+        );
+      }
+    
+
     try {
-      const endpoint = mode === "edit" ? `/api/expert/${id}` : "/api/expert";
+      const endpoint = mode === "edit" ? `/api/admin/expert/edit/${id}` : "/api/admin/expert/create";
       const method = mode === "edit" ? "PUT" : "POST";
       
       await fetchApi(endpoint, {
         method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(formData),
       });
 
@@ -97,7 +111,7 @@ export default function ExpertForm({ mode }: ExpertFormProps) {
         description: `Chuyên gia đã được ${mode === "edit" ? "cập nhật" : "thêm"} thành công`,
       });
       
-      router.push("/experts");
+      router.push("/admin/experts");
     } catch (error: any) {
       toast({
         title: "Lỗi",

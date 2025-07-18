@@ -70,7 +70,7 @@ export default function AdminUsersPage() {
     handlePageSizeChange,
     handleFilterChange,
   } = useDataSearch<User>({
-    apiEndpoint: "/api/admin/users/search",
+    apiEndpoint: "/duoclieu/api/admin/users/search",
     initialParams: {
       pageIndex: 1,
       pageSize: 10,

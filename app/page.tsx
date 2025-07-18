@@ -23,15 +23,27 @@ import {
   Star,
   TrendingUp,
   Users,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
+import { fetchApi } from "@/lib/api-client";
+import { MediaViewer } from "@/components/media/media-viewer";
+import { Page } from "@/types/api";
+import { Plant } from "./types/plant";
+import { useRouter } from "next/navigation";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingPlants, setIsLoadingPlants] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [featuredPlants, setFeaturedPlants] = useState<Plant[]>([]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH;
+  const router = useRouter();
 
   // Auto-slide for hero section
   useEffect(() => {
@@ -41,14 +53,51 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, []);
 
-  const handleSearch = (e) => {
+  // Fetch featured plants
+  useEffect(() => {
+    const fetchFeaturedPlants = async () => {
+      setIsLoadingPlants(true);
+      setError(null);
+
+      try {
+        // Assuming an endpoint like /api/plants/featured or /api/plants/search with filters
+        const result = await fetchApi<Page<Plant>>(
+          "/api/plants/search?pageIndex=1&pageSize=6"
+        );
+
+        if (result.success && result.data && result.data.content) {
+          setFeaturedPlants(result.data.content);
+        } else {
+          throw new Error(
+            result.message || "Không thể tải danh sách cây nổi bật"
+          );
+        }
+      } catch (error: any) {
+        const errorMessage = error.message || "Đã xảy ra lỗi khi tải dữ liệu";
+        setError(errorMessage);
+        setFeaturedPlants([]);
+        toast({
+          title: "Lỗi",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingPlants(false);
+      }
+    };
+
+    fetchFeaturedPlants();
+  }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       setIsLoading(true);
-      // Simulate search navigation
       setTimeout(() => {
         setIsLoading(false);
         console.log(`Searching for: ${searchQuery}`);
+        // Optionally redirect to /plants with search query
+        router.push(`/plants?keyword=${encodeURIComponent(searchQuery)}`);
       }, 1000);
     }
   };
@@ -71,57 +120,6 @@ export default function HomePage() {
       subtitle: "Kiến thức từ các chuyên gia",
       description:
         "Kết nối với các chuyên gia và nhà nghiên cứu hàng đầu về dược liệu Việt Nam",
-    },
-  ];
-
-  const featuredPlants = [
-    {
-      id: 1,
-      name: "Ginseng Việt Nam",
-      scientific: "Panax vietnamensis",
-      uses: "Tăng cường miễn dịch",
-      image: "🌿",
-      rating: 4.8,
-    },
-    {
-      id: 2,
-      name: "Đương quy",
-      scientific: "Angelica sinensis",
-      uses: "Bổ máu, điều kinh",
-      image: "🌾",
-      rating: 4.7,
-    },
-    {
-      id: 3,
-      name: "Cam thảo",
-      scientific: "Glycyrrhiza glabra",
-      uses: "Giải độc, chống viêm",
-      image: "🌱",
-      rating: 4.9,
-    },
-    {
-      id: 4,
-      name: "Nhân sâm",
-      scientific: "Panax ginseng",
-      uses: "Bồi bổ sức khỏe",
-      image: "🌿",
-      rating: 4.8,
-    },
-    {
-      id: 5,
-      name: "Bạch truật",
-      scientific: "Atractylodes macrocephala",
-      uses: "Tăng cường tiêu hóa",
-      image: "🌾",
-      rating: 4.6,
-    },
-    {
-      id: 6,
-      name: "Hoàng kỳ",
-      scientific: "Astragalus membranaceus",
-      uses: "Tăng cường miễn dịch",
-      image: "🌱",
-      rating: 4.7,
     },
   ];
 
@@ -171,6 +169,106 @@ export default function HomePage() {
     },
   ];
 
+  const renderLoadingPlants = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <Card
+          key={index}
+          className="overflow-hidden animate-pulse border-0 shadow-lg"
+        >
+          <div className="h-48 bg-gray-200"></div>
+          <CardHeader className="pb-3">
+            <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mt-2"></div>
+          </CardHeader>
+          <CardContent className="pb-4">
+            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          </CardContent>
+          <CardFooter className="pt-0">
+            <div className="h-10 bg-gray-200 rounded w-full"></div>
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  );
+
+  const renderErrorState = () => (
+    <div className="text-center py-12">
+      <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        Đã xảy ra lỗi
+      </h3>
+      <p className="text-gray-600 mb-4">{error}</p>
+      <Button onClick={() => window.location.reload()} variant="outline">
+        <Loader2 className="h-4 w-4 mr-2" />
+        Thử lại
+      </Button>
+    </div>
+  );
+
+  const renderFeaturedPlants = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {featuredPlants.map((plant) => (
+        <Card
+          key={plant.id}
+          className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-lg overflow-hidden"
+        >
+          <div className="h-48 bg-gradient-to-br from-green-100 to-emerald-100 relative overflow-hidden">
+            {plant.featuredMediaId && plant.featuredMediaId > 0 ? (
+              <MediaViewer
+                mediaId={plant.featuredMediaId}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                width="100%"
+                height="100%"
+                alt={plant.name}
+                showLoader={true}
+                priority={false}
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Leaf className="h-16 w-16 text-gray-400" />
+              </div>
+            )}
+            {/* Mock rating since API might not provide it */}
+            {/* <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
+              <div className="flex items-center">
+                <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                <span className="ml-1 text-sm font-medium">4.8</span>
+              </div>
+            </div> */}
+          </div>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg group-hover:text-green-600 transition-colors">
+              {plant.name}
+            </CardTitle>
+            <CardDescription className="text-sm italic text-gray-500">
+              Họ: {plant.family || "Không có thông tin"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pb-4">
+            <div className="flex items-center mb-3">
+              {/* <Heart className="h-4 w-4 text-red-500 mr-2" /> */}
+              <span className="text-sm text-gray-600">
+                Tên khoa học: {plant.scientificName || "Không có thông tin"}
+              </span>
+            </div>
+          </CardContent>
+          <CardFooter className="pt-0">
+            <Link href={`/plants/${plant.id}`} className="w-full">
+              <Button
+                variant="outline"
+                className="w-full group-hover:bg-green-600 group-hover:text-white group-hover:border-green-600 transition-all duration-300"
+              >
+                Xem chi tiết
+                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  );
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -181,7 +279,6 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-black/30"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-green-600/50 to-transparent"></div>
 
-        {/* Decorative Elements */}
         <div className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-400/20 rounded-full blur-3xl"></div>
 
@@ -206,16 +303,17 @@ export default function HomePage() {
             </div>
 
             <div className="flex justify-center items-center">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group"
-              >
-                Khám phá cây dược liệu
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
+              <Link href="/plants">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group"
+                >
+                  Khám phá cây dược liệu
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
             </div>
 
-            {/* Slide indicators */}
             <div className="flex justify-center mt-12 space-x-2">
               {heroSlides.map((_, index) => (
                 <button
@@ -340,13 +438,15 @@ export default function HomePage() {
                   </CardDescription>
                 </CardContent>
                 <CardFooter className="pt-0">
-                  <Button
-                    className="w-full group-hover:bg-green-600 group-hover:text-white transition-all duration-300"
-                    variant="outline"
-                  >
-                    Xem danh sách
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </Button>
+                  <Link href={category.href} className="w-full">
+                    <Button
+                      className="w-full group-hover:bg-green-600 group-hover:text-white transition-all duration-300"
+                      variant="outline"
+                    >
+                      Xem danh sách
+                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
                 </CardFooter>
               </Card>
             ))}
@@ -370,60 +470,34 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredPlants.map((plant) => (
-              <Card
-                key={plant.id}
-                className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-lg overflow-hidden"
-              >
-                <div className="h-48 bg-gradient-to-br from-green-100 to-emerald-100 relative overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-6xl">{plant.image}</div>
-                  </div>
-                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
-                    <div className="flex items-center">
-                      <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                      <span className="ml-1 text-sm font-medium">
-                        {plant.rating}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg group-hover:text-green-600 transition-colors">
-                    {plant.name}
-                  </CardTitle>
-                  <CardDescription className="text-sm italic text-gray-500">
-                    {plant.scientific}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="flex items-center mb-3">
-                    <Heart className="h-4 w-4 text-red-500 mr-2" />
-                    <span className="text-sm text-gray-600">{plant.uses}</span>
-                  </div>
-                </CardContent>
-                <CardFooter className="pt-0">
-                  <Button
-                    variant="outline"
-                    className="w-full group-hover:bg-green-600 group-hover:text-white group-hover:border-green-600 transition-all duration-300"
-                  >
-                    Xem chi tiết
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+          {error ? (
+            renderErrorState()
+          ) : isLoadingPlants ? (
+            renderLoadingPlants()
+          ) : featuredPlants.length > 0 ? (
+            renderFeaturedPlants()
+          ) : (
+            <div className="text-center py-12">
+              <Leaf className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Không có cây dược liệu nổi bật
+              </h3>
+              <p className="text-gray-600">
+                Hiện tại chưa có dữ liệu cây dược liệu nổi bật.
+              </p>
+            </div>
+          )}
 
           <div className="text-center mt-12">
-            <Button
-              size="lg"
-              className="bg-green-600 hover:bg-green-700 px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              Xem tất cả cây dược liệu
-              <TrendingUp className="ml-2 h-5 w-5" />
-            </Button>
+            <Link href="/plants">
+              <Button
+                size="lg"
+                className="bg-green-600 hover:bg-green-700 px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Xem tất cả cây dược liệu
+                <TrendingUp className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

@@ -40,7 +40,7 @@ export default function CreateExpertPage() {
         );
       }
 
-      const response = await fetchApi("/api/expert", {
+      const response = await fetchApi("/api/admin/expert/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
