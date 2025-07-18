@@ -5,6 +5,6 @@ export async function POST(request: NextRequest) {
   return callApiPost(
     request, 
     "/api/expert", 
-    "Tạo bài viết thành công"
+    "Tạo chuyên gia thành công"
   );
 }

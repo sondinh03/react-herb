@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer className="bg-green-900 text-white">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-4">
             <div className="flex items-center">
               <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center">
@@ -61,14 +61,14 @@ export default function Footer() {
                   Chuyên gia
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link href="/about" className="text-green-100 hover:text-white">
                   Giới thiệu
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
-
+{/* 
           <div>
             <h3 className="text-lg font-semibold mb-4">Danh mục</h3>
             <ul className="space-y-2">
@@ -103,7 +103,7 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </div> */}
 
           <div>
             <h3 className="text-lg font-semibold mb-4">Liên hệ</h3>

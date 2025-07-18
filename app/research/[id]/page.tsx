@@ -18,21 +18,12 @@ import {
 import { Research } from "@/app/types/research";
 import { fetchApi } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
-import { ResolvedPos } from "@tiptap/pm/model";
 import { BackButton } from "@/components/BackButton";
 import dynamic from "next/dynamic";
-import { handleWait } from "@/components/header";
 
 const PDFViewer = dynamic(() => import("@/components/media/PDFViewer"), {
-  ssr: false, // Tắt SSR để tránh lỗi DOMMatrix
+  ssr: false,
 });
-
-const purchaseInfo = {
-  documentId: "doc123",
-  documentName: "Tài liệu học tập",
-  price: 50000,
-  currency: "VND",
-};
 
 export default function ResearchDetailPage({
   params,
@@ -47,9 +38,14 @@ export default function ResearchDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [showPDFPreview, setShowPDFPreview] = useState(true);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [isPaid, setIsPaid] = useState(false);
+  const [isPurchased, setIsPurchased] = useState(false);
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  // Xác định trạng thái tài liệu
+  const isFree = (research?.downloadPrice || 0) === 0;
+  const canViewFull = isFree || isPurchased;
+  const canDownload = isFree || isPurchased;
 
   // Fetch research detail
   const fetchResearchDetail = async () => {
@@ -60,9 +56,8 @@ export default function ResearchDetailPage({
       const result = await fetchApi<Research>(`/api/research/${researchId}`);
       if (result.success && result.data) {
         setResearch(result.data);
-        // Chỉ set isPaid = true nếu có thông tin thanh toán từ API
-        // (đây chỉ là mock, sau này sẽ kiểm tra từ API)
-        setIsPaid(result.data.isPurchased || false);
+        // Chỉ set isPurchased từ API response
+        setIsPurchased(result.data.isPurchased || false);
       } else {
         setError(result.message || "Không thể tải thông tin nghiên cứu");
       }
@@ -79,12 +74,23 @@ export default function ResearchDetailPage({
     }
   };
 
+  
+
   const handlePurchaseSuccess = (documentId: string) => {
-    // Mock - sau này sẽ gọi API để xác nhận thanh toán
-    setIsPaid(true);
+    // Cập nhật trạng thái đã mua
+    setIsPurchased(true);
+    
+    // Cập nhật trong research object để đồng bộ
+    if (research) {
+      setResearch({
+        ...research,
+        isPurchased: true
+      });
+    }
+    
     toast({
       title: "Thành công",
-      description: "Bạn đã mua tài liệu thành công!",
+      description: "Bạn đã mua tài liệu thành công! Có thể xem và tải xuống toàn bộ nội dung.",
       variant: "default",
     });
   };
@@ -97,39 +103,25 @@ export default function ResearchDetailPage({
     });
   };
 
-  // Handle PDF preview
-  const handlePreviewPDF = async () => {
-    if (!research?.mediaUrl) return;
-
-    setIsPreviewLoading(true);
-    try {
-      setShowPDFPreview(true);
-    } catch (error: any) {
-      toast({
-        title: "Lỗi",
-        description: "Không thể tải bản xem trước PDF",
-        variant: "destructive",
-      });
-    } finally {
-      setIsPreviewLoading(false);
-    }
-  };
-
-  // Handle close PDF preview
-  const handleClosePDFPreview = () => {
-    setShowPDFPreview(false);
-  };
-
   // Handle PDF download
   const handleDownloadPDF = async () => {
-    if (!isPaid) {
-      toast({
-        title: "Không thể tải xuống",
-        description: "Vui lòng mua tài liệu để tải xuống toàn bộ PDF.",
-        variant: "destructive",
-      });
+    if (!canDownload) {
+      if (isFree) {
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải xuống tài liệu miễn phí này.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Không thể tải xuống",
+          description: "Vui lòng mua tài liệu để tải xuống toàn bộ PDF.",
+          variant: "destructive",
+        });
+      }
       return;
     }
+
     if (research?.mediaUrl || research?.mediaId) {
       try {
         const id = research.mediaId;
@@ -140,9 +132,8 @@ export default function ResearchDetailPage({
         if (!response.ok) {
           throw new Error(`Lỗi tải xuống: ${response.statusText}`);
         }
-        if (
-          !response.headers.get("content-type")?.includes("application/pdf")
-        ) {
+        
+        if (!response.headers.get("content-type")?.includes("application/pdf")) {
           throw new Error("Tệp không phải định dạng PDF");
         }
 
@@ -157,9 +148,18 @@ export default function ResearchDetailPage({
         if (contentDisposition && contentDisposition.includes("filename=")) {
           fileName = contentDisposition.split("filename=")[1].replace(/"/g, "");
         }
+        
         link.download = `${fileName}.pdf`;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
+
+        toast({
+          title: "Thành công",
+          description: "Tải xuống PDF thành công!",
+          variant: "default",
+        });
       } catch (error: any) {
         toast({
           title: "Lỗi",
@@ -188,17 +188,41 @@ export default function ResearchDetailPage({
     );
   };
 
+  // Get price display
+  const getPriceDisplay = () => {
+    if (isFree) return "Miễn phí";
+    if (isPurchased) return "Đã mua";
+    return `${(research?.downloadPrice || 0).toLocaleString()} VND`;
+  };
+
+  // Get download button state
+  const getDownloadButtonProps = () => {
+    if (isFree) {
+      return {
+        disabled: false,
+        className: "hover:bg-gray-100",
+        text: "Tải xuống PDF miễn phí"
+      };
+    }
+    
+    if (isPurchased) {
+      return {
+        disabled: false,
+        className: "hover:bg-gray-100",
+        text: "Tải xuống PDF"
+      };
+    }
+    
+    return {
+      disabled: true,
+      className: "opacity-50 cursor-not-allowed",
+      text: "Mua để tải xuống"
+    };
+  };
+
   useEffect(() => {
     fetchResearchDetail();
   }, [researchId]);
-
-  useEffect(() => {
-    if (research && research.downloadPrice === 0) {
-      setIsPaid(true);
-    } else {
-      setIsPaid(false);
-    }
-  }, [research]);
 
   // Loading state
   if (isLoading) {
@@ -255,6 +279,8 @@ export default function ResearchDetailPage({
     );
   }
 
+  const downloadButtonProps = getDownloadButtonProps();
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -263,9 +289,17 @@ export default function ResearchDetailPage({
           <BackButton href="/research" />
 
           <div className="space-y-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
-              {research.title}
-            </h1>
+            <div className="flex items-start justify-between">
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight flex-1">
+                {research.title}
+              </h1>
+              <div className="ml-4 flex flex-col items-end space-y-2">
+                {getStatusBadge(research.status)}
+                <Badge variant={isFree ? "default" : isPurchased ? "secondary" : "outline"}>
+                  {getPriceDisplay()}
+                </Badge>
+              </div>
+            </div>
 
             {research.abstract && (
               <p className="text-lg text-gray-600 leading-relaxed">
@@ -310,28 +344,15 @@ export default function ResearchDetailPage({
 
             {research.mediaUrl && (
               <div className="flex items-center gap-3">
-                {/* <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePreviewPDF}
-                  disabled={isPreviewLoading}
-                >
-                  <EyeIcon className="h-4 w-4 mr-2" />
-                  {isPreviewLoading ? "Đang tải..." : "Xem trước PDF"}
-                </Button> */}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleDownloadPDF}
-                  disabled={!isPaid}
-                  className={
-                    isPaid
-                      ? "hover:bg-gray-100"
-                      : "opacity-50 cursor-not-allowed"
-                  }
+                  disabled={downloadButtonProps.disabled}
+                  className={downloadButtonProps.className}
                 >
                   <DownloadIcon className="h-4 w-4 mr-2" />
-                  Tải xuống PDF
+                  {downloadButtonProps.text}
                 </Button>
               </div>
             )}
@@ -352,23 +373,24 @@ export default function ResearchDetailPage({
               </CardContent>
             </Card>
 
-            {/* Chỉ hiện PDF Preview khi showPDFPreview = true */}
+            {/* PDF Preview */}
             {showPDFPreview && research?.mediaUrl && (
               <Card className="mb-8">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-bold text-gray-900">
-                      {isPaid ? "Tài liệu đã mua" : "Xem trước PDF"}
+                      {isFree ? "Tài liệu miễn phí" : isPurchased ? "Tài liệu đã mua" : "Xem trước PDF"}
                     </h2>
                   </div>
                   <PDFViewer
                     pdfUrl={`${baseUrl}${research.mediaUrl}`}
                     maxPreviewPages={research.previewPages || 2}
-                    isPaid={isPaid}
+                    isPaid={isPurchased}
+                    isFree={isFree}
                     purchaseInfo={{
                       documentId: research.id.toString(),
                       documentName: research.title,
-                      price: research.downloadPrice || 50000,
+                      price: research.downloadPrice || 0,
                       currency: "VND",
                     }}
                     onPurchaseSuccess={handlePurchaseSuccess}
