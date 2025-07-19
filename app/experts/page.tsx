@@ -281,12 +281,12 @@ export default function ExpertsPage() {
               Danh sách các chuyên gia trong lĩnh vực dược liệu
             </p>
           </div>
-          <div className="flex gap-2">
+          {/* <div className="flex gap-2">
             <Button variant="outline" className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
               Lọc
             </Button>
-          </div>
+          </div> */}
         </div>
 
         {/* Search and Filter */}
