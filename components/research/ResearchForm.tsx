@@ -216,7 +216,7 @@ export default function ResearchForm({
 
   const handleSave = async () => {
     // Validate required fields
-    if (!formData.title || !formData.slug || !formData.content) {
+    if (!formData.title || !formData.content) {
       toast({
         title: "Lỗi",
         description: "Vui lòng điền đầy đủ các trường bắt buộc",
@@ -226,14 +226,14 @@ export default function ResearchForm({
     }
 
     // Validate slug format
-    if (!/^[a-z0-9-]+$/.test(formData.slug)) {
-      toast({
-        title: "Lỗi",
-        description: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang",
-        variant: "destructive",
-      });
-      return;
-    }
+    // if (!/^[a-z0-9-]+$/.test(formData.slug)) {
+    //   toast({
+    //     title: "Lỗi",
+    //     description: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     // Check if PDF is required for new research
     if (mode === "create" && !formData.mediaId) {
@@ -338,8 +338,8 @@ export default function ResearchForm({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                    <div className="space-y-4">
                       <Label htmlFor="title">Tiêu đề</Label>
                       <Input
                         id="title"
@@ -349,7 +349,7 @@ export default function ResearchForm({
                         required
                       />
                     </div>
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <Label htmlFor="slug">Slug</Label>
                       <Input
                         id="slug"
@@ -358,7 +358,7 @@ export default function ResearchForm({
                         onChange={handleInputChange}
                         required
                       />
-                    </div>
+                    </div> */}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

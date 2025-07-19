@@ -110,7 +110,7 @@ export default function CreateResearchPage() {
         Object.entries(createData).filter(([_, value]) => value !== undefined && value !== null)
       );
 
-      const response = await fetchApi("/api/research", {
+      const response = await fetchApi("/api/admin/research/create", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -2,7 +2,7 @@
 export interface Research {
   id: number; 
   title: string; // Tiêu đề, bắt buộc
-  slug: string; // Slug, bắt buộc và duy nhất
+  slug?: string; // Slug, bắt buộc và duy nhất
   abstract?: string; 
   content: string; // Nội dung chi tiết, bắt buộc
   authors?: string; 

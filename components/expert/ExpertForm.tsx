@@ -14,12 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Loader2, Save, ArrowLeft } from "lucide-react";
 import { ExpertResponseDto } from "@/app/types/expert";
@@ -32,7 +27,7 @@ interface ExpertFormProps {
 export default function ExpertForm({ mode }: ExpertFormProps) {
   const router = useRouter();
   const { id } = useParams();
-  
+
   const [formData, setFormData] = useState<Partial<ExpertResponseDto>>({
     name: "",
     title: "",
@@ -54,7 +49,9 @@ export default function ExpertForm({ mode }: ExpertFormProps) {
       const fetchExpert = async () => {
         setIsFetching(true);
         try {
-          const response = await fetchApi<ExpertResponseDto>(`/api/expert/${id}`);
+          const response = await fetchApi<ExpertResponseDto>(
+            `/api/expert/${id}`
+          );
           setFormData(response.data);
         } catch (error: any) {
           toast({
@@ -86,17 +83,17 @@ export default function ExpertForm({ mode }: ExpertFormProps) {
     setIsLoading(true);
 
     const token = getAuthToken();
-      if (!token) {
-        throw new Error(
-          "Không tìm thấy token xác thực. Vui lòng đăng nhập lại."
-        );
-      }
-    
+    if (!token) {
+      throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
+    }
 
     try {
-      const endpoint = mode === "edit" ? `/api/admin/expert/edit/${id}` : "/api/admin/expert/create";
+      const endpoint =
+        mode === "edit"
+          ? `/api/admin/expert/edit/${id}`
+          : "/api/admin/expert/create";
       const method = mode === "edit" ? "PUT" : "POST";
-      
+
       await fetchApi(endpoint, {
         method,
         headers: {
@@ -108,14 +105,18 @@ export default function ExpertForm({ mode }: ExpertFormProps) {
 
       toast({
         title: "Thành công",
-        description: `Chuyên gia đã được ${mode === "edit" ? "cập nhật" : "thêm"} thành công`,
+        description: `Chuyên gia đã được ${
+          mode === "edit" ? "cập nhật" : "thêm"
+        } thành công`,
       });
-      
+
       router.push("/admin/experts");
     } catch (error: any) {
       toast({
         title: "Lỗi",
-        description: error.message || `Không thể ${mode === "edit" ? "cập nhật" : "thêm"} chuyên gia`,
+        description:
+          error.message ||
+          `Không thể ${mode === "edit" ? "cập nhật" : "thêm"} chuyên gia`,
         variant: "destructive",
       });
     } finally {
@@ -138,7 +139,9 @@ export default function ExpertForm({ mode }: ExpertFormProps) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>
-                {mode === "edit" ? "Chỉnh sửa chuyên gia" : "Thêm chuyên gia mới"}
+                {mode === "edit"
+                  ? "Chỉnh sửa chuyên gia"
+                  : "Thêm chuyên gia mới"}
               </CardTitle>
               <Button
                 variant="ghost"
@@ -165,14 +168,31 @@ export default function ExpertForm({ mode }: ExpertFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="title">Danh xưng</Label>
-                <Input
+                <Label htmlFor="title">Học hàm, học vị</Label>
+                <Select
                   id="title"
                   name="title"
                   value={formData.title}
-                  onChange={handleInputChange}
-                  placeholder="VD: GS.TS, PGS.TS, TS, ThS..."
-                />
+                  onValueChange={(value) =>
+                    handleInputChange({ target: { name: "title", value } })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn học hàm, học vị" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Giáo sư, Tiến sĩ">
+                      Giáo sư, Tiến sĩ
+                    </SelectItem>
+                    <SelectItem value="Phó Giáo sư, Tiến sĩ">
+                      Phó Giáo sư, Tiến sĩ
+                    </SelectItem>
+                    <SelectItem value="Tiến sĩ">Tiến sĩ</SelectItem>
+                    <SelectItem value="Thạc sĩ">Thạc sĩ</SelectItem>
+                    <SelectItem value="Kỹ sư">Kỹ sư</SelectItem>
+                    <SelectItem value="Cử nhân">Cử nhân</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
