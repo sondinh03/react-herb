@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { handleWait } from "./header";
 
 interface PaymentDialogProps {
   open: boolean;
@@ -62,7 +63,8 @@ export function PaymentDialog({
           >
             Hủy
           </Button>
-          <Button onClick={handlePayment} disabled={isProcessing}>
+          <Button onClick={handleWait} disabled={isProcessing}>
+            {/* <Button onClick={handlePayment} disabled={isProcessing}> */}
             {isProcessing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

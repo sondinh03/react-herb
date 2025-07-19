@@ -125,7 +125,7 @@ export default function PlantForm({
       setIsLoadingActiveCompounds(true);
       try {
         const result = await fetchApi<Page<ActiveCompoundResponse>>(
-          "/api/active-compound/search?sortField=name&sortDirection=asc"
+          "/api/active-compounds/search?sortField=name&sortDirection=asc"
         );
         setActiveCompounds(result.data?.content || []);
       } catch (error: any) {
